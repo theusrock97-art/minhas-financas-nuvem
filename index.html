@@ -372,8 +372,8 @@
         .progress-bar-bg { background: var(--bg-color); border-radius: 10px; height: 10px; overflow: hidden; border: 1px solid var(--border); }
         .progress-bar-fill { height: 100%; border-radius: 10px; background: var(--green); }
 
-        .accounts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
-        .account-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; display: flex; justify-content: space-between; align-items: center; }
+        .accounts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+        .account-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; display: flex; justify-content: space-between; align-items: flex-start; }
 
         .filter-bar { display: flex; gap: 12px; margin-bottom: 15px; flex-wrap: wrap; }
         .filter-bar input, .filter-bar select { padding: 8px 12px; font-size: 13px; }
@@ -844,7 +844,6 @@
             
             const acc = state.accounts.find(a => a.id === t.accountId);
             if (acc && acc.type === 'credit' && acc.closingDay && d >= Number(acc.closingDay)) {
-                // Cai na fatura do mês seguinte
                 dateObj.setMonth(dateObj.getMonth() + 1);
             }
             return dateObj;
@@ -994,6 +993,17 @@
             toggleClosingDayField();
         }
 
+        function deleteAccount(accId) {
+            if (state.accounts.length <= 1) {
+                alert('Você precisa ter pelo menos uma conta cadastrada!');
+                return;
+            }
+            if (confirm('Deseja realmente apagar esta conta?')) {
+                state.accounts = state.accounts.filter(a => a.id !== accId);
+                saveUserData();
+            }
+        }
+
         function renderAccounts() {
             const container = document.getElementById('accounts-container');
             container.innerHTML = '';
@@ -1016,7 +1026,10 @@
                                 R$ ${bal.toFixed(2).replace('.', ',')}
                             </div>
                         </div>
-                        <span style="font-size: 28px;">${icon}</span>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+                            <span style="font-size: 24px;">${icon}</span>
+                            <button class="btn-del" onclick="deleteAccount('${acc.id}')" title="Excluir Conta">🗑️</button>
+                        </div>
                     </div>
                 `;
             });
