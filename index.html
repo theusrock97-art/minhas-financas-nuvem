@@ -506,7 +506,7 @@
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab(event, 'tab-overview')">📌 Painel & Lançamentos</button>
             <button class="tab-btn" onclick="switchTab(event, 'tab-charts')">📊 Gráficos & Relatórios</button>
-            <button class="tab-btn" onclick="switchTab(event, 'tab-accounts')">💳 Contas & Carteiras</button>
+            <button class="tab-btn" onclick="switchTab(event, 'tab-accounts')">💳 Contas & Cartões</button>
             <button class="tab-btn" onclick="switchTab(event, 'tab-budgets')">🎯 Metas & Orçamentos</button>
         </div>
 
@@ -627,11 +627,22 @@
                 <h3 class="form-title">💳 Minhas Contas & Cartões</h3>
                 <div class="form-grid" style="margin-bottom: 20px;">
                     <div class="form-group">
-                        <label>Nome da Conta</label>
+                        <label>Nome da Conta / Cartão</label>
                         <input type="text" id="acc-name-input" placeholder="Ex: Nubank, Carteira...">
                     </div>
                     <div class="form-group">
-                        <label>Saldo Inicial (R$)</label>
+                        <label>Tipo</label>
+                        <select id="acc-type-input" onchange="toggleClosingDayField()">
+                            <option value="normal">Conta Corrente / Dinheiro</option>
+                            <option value="credit">Cartão de Crédito</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="closing-day-group" style="display: none;">
+                        <label>Dia de Fechamento da Fatura</label>
+                        <input type="number" id="acc-closing-input" min="1" max="31" placeholder="Ex: 25">
+                    </div>
+                    <div class="form-group">
+                        <label>Saldo Inicial / Limite (R$)</label>
                         <input type="number" id="acc-balance-input" step="0.01" placeholder="0.00">
                     </div>
                     <div class="form-group" style="justify-content: flex-end;">
@@ -683,8 +694,8 @@
         // ESTADO GLOBAL
         const DEFAULT_CATEGORIES = ['Alimentação', 'Moradia', 'Transporte', 'Lazer', 'Saúde', 'Educação', 'Salário', 'Investimentos', 'Outros'];
         const DEFAULT_ACCOUNTS = [
-            { id: 'acc_1', name: 'Carteira', initialBalance: 0 },
-            { id: 'acc_2', name: 'Banco Principal', initialBalance: 0 }
+            { id: 'acc_1', name: 'Carteira', type: 'normal', closingDay: 0, initialBalance: 0 },
+            { id: 'acc_2', name: 'Banco Principal', type: 'normal', closingDay: 0, initialBalance: 0 }
         ];
 
         let currentUser = null;
@@ -742,7 +753,7 @@
                         state.accounts = data.accounts || DEFAULT_ACCOUNTS;
                         state.budgets = data.budgets || {};
                     } else {
-                        saveUserData(); // Cria documento inicial
+                        saveUserData(); 
                     }
                     initSelects();
                     updateUI();
@@ -793,6 +804,12 @@
             return `${d}/${m}/${y}`;
         }
 
+        function toggleClosingDayField() {
+            const type = document.getElementById('acc-type-input').value;
+            const group = document.getElementById('closing-day-group');
+            group.style.display = type === 'credit' ? 'flex' : 'none';
+        }
+
         function initSelects() {
             const catSelect = document.getElementById('tx-category');
             const filterCat = document.getElementById('filter-cat');
@@ -819,6 +836,20 @@
             }
         }
 
+        // CALCULA A DATA EFETIVA CONSIDERANDO O FECHAMENTO DO CARTÃO
+        function getEffectiveDate(t) {
+            if (!t.date) return new Date();
+            const [y, m, d] = t.date.split('-').map(Number);
+            let dateObj = new Date(y, m - 1, d);
+            
+            const acc = state.accounts.find(a => a.id === t.accountId);
+            if (acc && acc.type === 'credit' && acc.closingDay && d >= Number(acc.closingDay)) {
+                // Cai na fatura do mês seguinte
+                dateObj.setMonth(dateObj.getMonth() + 1);
+            }
+            return dateObj;
+        }
+
         // ATUALIZAÇÃO DA INTERFACE
         function updateUI() {
             document.getElementById('display-month').innerText = formatMonthYear(state.currentDate);
@@ -827,9 +858,8 @@
             const month = state.currentDate.getMonth();
 
             const monthTxs = state.transactions.filter(t => {
-                if (!t.date) return false;
-                const d = new Date(t.date + 'T00:00:00');
-                return d.getFullYear() === year && d.getMonth() === month;
+                const effDate = getEffectiveDate(t);
+                return effDate.getFullYear() === year && effDate.getMonth() === month;
             });
 
             let incomeMonth = 0;
@@ -895,8 +925,8 @@
             const typeFilter = document.getElementById('filter-type').value;
 
             const filtered = state.transactions.filter(t => {
-                const d = new Date(t.date + 'T00:00:00');
-                const matchMonth = d.getFullYear() === year && d.getMonth() === month;
+                const effDate = getEffectiveDate(t);
+                const matchMonth = effDate.getFullYear() === year && effDate.getMonth() === month;
                 const matchSearch = t.desc.toLowerCase().includes(search);
                 const matchCat = catFilter === 'all' || t.category === catFilter;
                 const matchType = typeFilter === 'all' || t.type === typeFilter;
@@ -904,7 +934,7 @@
             });
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: var(--text-secondary); padding: 25px;">Nenhuma transação encontrada para este mês.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: var(--text-secondary); padding: 25px;">Nenhuma transação encontrada para este mês/fatura.</td></tr>`;
                 return;
             }
 
@@ -947,16 +977,21 @@
 
         function addAccount() {
             const name = document.getElementById('acc-name-input').value.trim();
+            const type = document.getElementById('acc-type-input').value;
+            const closingDay = parseInt(document.getElementById('acc-closing-input').value) || 0;
             const bal = parseFloat(document.getElementById('acc-balance-input').value) || 0;
 
             if (!name) return alert('Digite o nome da conta!');
 
-            const newAcc = { id: 'acc_' + Date.now(), name, initialBalance: bal };
+            const newAcc = { id: 'acc_' + Date.now(), name, type, closingDay, initialBalance: bal };
             state.accounts.push(newAcc);
             saveUserData();
 
             document.getElementById('acc-name-input').value = '';
             document.getElementById('acc-balance-input').value = '';
+            document.getElementById('acc-closing-input').value = '';
+            document.getElementById('acc-type-input').value = 'normal';
+            toggleClosingDayField();
         }
 
         function renderAccounts() {
@@ -969,16 +1004,19 @@
                     bal += t.type === 'income' ? t.amount : -t.amount;
                 });
 
+                const subtitle = acc.type === 'credit' ? `Cartão (Fechamento: dia ${acc.closingDay})` : 'Conta Corrente';
+                const icon = acc.type === 'credit' ? '💳' : '🏦';
+
                 container.innerHTML += `
                     <div class="account-card">
                         <div>
-                            <div style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; font-weight: bold;">Conta</div>
+                            <div style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; font-weight: bold;">${subtitle}</div>
                             <div style="font-size: 18px; font-weight: bold; margin-top: 4px;">${acc.name}</div>
                             <div style="font-size: 14px; margin-top: 6px; color: ${bal >= 0 ? 'var(--green)' : 'var(--red)'}; font-weight: bold;">
                                 R$ ${bal.toFixed(2).replace('.', ',')}
                             </div>
                         </div>
-                        <span style="font-size: 28px;">💳</span>
+                        <span style="font-size: 28px;">${icon}</span>
                     </div>
                 `;
             });
@@ -1070,8 +1108,8 @@
             const month = state.currentDate.getMonth();
 
             const monthTxs = state.transactions.filter(t => {
-                const d = new Date(t.date + 'T00:00:00');
-                return d.getFullYear() === year && d.getMonth() === month && t.type === 'expense';
+                const effDate = getEffectiveDate(t);
+                return effDate.getFullYear() === year && effDate.getMonth() === month && t.type === 'expense';
             });
 
             const catTotals = {};
@@ -1135,8 +1173,8 @@
             months.forEach(m => {
                 let inc = 0, exp = 0;
                 state.transactions.forEach(t => {
-                    const d = new Date(t.date + 'T00:00:00');
-                    if (d.getFullYear() === m.year && d.getMonth() === m.month) {
+                    const effDate = getEffectiveDate(t);
+                    if (effDate.getFullYear() === m.year && effDate.getMonth() === m.month) {
                         if (t.type === 'income') inc += t.amount;
                         else exp += t.amount;
                     }
