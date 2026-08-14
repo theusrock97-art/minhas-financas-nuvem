@@ -535,6 +535,7 @@
             <button class="tab-btn active" onclick="switchTab(event, 'tab-overview')">📌 Painel & Lançamentos</button>
             <button class="tab-btn" onclick="switchTab(event, 'tab-charts')">📊 Gráficos & Relatórios</button>
             <button class="tab-btn" onclick="switchTab(event, 'tab-accounts')">💳 Contas & Cartões</button>
+            <button class="tab-btn" onclick="switchTab(event, 'tab-invoices')">💳 Faturas</button>
             <button class="tab-btn" onclick="switchTab(event, 'tab-budgets')">🎯 Metas & Categorias</button>
             <button class="tab-btn" onclick="switchTab(event, 'tab-recurring')">🔄 Despesas Fixas</button>
         </div>
@@ -701,7 +702,41 @@
             </div>
         </div>
 
-        <!-- TAB 4: METAS & CATEGORIAS -->
+        <!-- TAB 4: FATURAS -->
+        <div id="tab-invoices" class="tab-content">
+            <div class="form-card">
+                <h3 class="form-title">💳 Fechamento de Fatura</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Selecione o Cartão</label>
+                        <select id="invoice-account-select" onchange="renderInvoices()"></select>
+                    </div>
+                </div>
+                <div class="card" style="margin-top: 20px; text-align: center;">
+                    <div class="card-header">
+                        <span>Total Faturado no Mês</span>
+                        <span>💳</span>
+                    </div>
+                    <div class="card-value val-expense" id="invoice-total">R$ 0,00</div>
+                </div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data da Compra</th>
+                            <th>Descrição</th>
+                            <th>Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoice-body">
+                        <!-- Faturas preenchidas via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 5: METAS & CATEGORIAS -->
         <div id="tab-budgets" class="tab-content">
             <!-- GERENCIAR CATEGORIAS -->
             <div class="form-card">
@@ -738,7 +773,7 @@
             </div>
         </div>
 
-        <!-- TAB 5: DESPESAS FIXAS / RECORRENTES -->
+        <!-- TAB 6: DESPESAS FIXAS / RECORRENTES -->
         <div id="tab-recurring" class="tab-content">
             <div class="form-card">
                 <h3 class="form-title">🔄 Despesas Fixas / Recorrentes</h3>
@@ -907,6 +942,7 @@
 
             if (tabId === 'tab-charts') drawCharts();
             if (tabId === 'tab-recurring') renderRecurringTable();
+            if (tabId === 'tab-invoices') renderInvoices();
         }
 
         function changeMonth(delta) {
@@ -978,12 +1014,13 @@
                 });
             });
 
-            const accountSelects = ['tx-account', 'tx-dest-account', 'rec-account'];
+            const accountSelects = ['tx-account', 'tx-dest-account', 'rec-account', 'invoice-account-select'];
             accountSelects.forEach(id => {
                 const el = document.getElementById(id);
                 if (!el) return;
                 el.innerHTML = '';
                 state.accounts.forEach(a => {
+                    if (id === 'invoice-account-select' && a.type !== 'credit') return; // Filtra apenas cartões de crédito na aba faturas
                     el.innerHTML += `<option value="${a.id}">${a.name}</option>`;
                 });
             });
@@ -1059,6 +1096,7 @@
             renderTransactions();
             renderAccounts();
             renderBudgets(monthTxs);
+            renderInvoices();
             generateInsights(incomeMonth, expenseMonth, monthTxs);
         }
 
@@ -1176,6 +1214,7 @@
 
         function renderTransactions() {
             const tbody = document.getElementById('tx-table-body');
+            if(!tbody) return;
             tbody.innerHTML = '';
 
             const year = state.currentDate.getFullYear();
@@ -1240,6 +1279,49 @@
                     </tr>
                 `;
             });
+        }
+
+        // RENDERIZAR FATURAS DO CARTÃO SELECIONADO
+        function renderInvoices() {
+            const selectAcc = document.getElementById('invoice-account-select');
+            const tbody = document.getElementById('invoice-body');
+            const totalEl = document.getElementById('invoice-total');
+            if (!tbody || !totalEl || !selectAcc) return;
+
+            tbody.innerHTML = '';
+            const accId = selectAcc.value;
+
+            if (!accId) {
+                totalEl.innerText = 'R$ 0,00';
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color: var(--text-secondary); padding: 25px;">Nenhum cartão de crédito cadastrado ou selecionado.</td></tr>`;
+                return;
+            }
+
+            const year = state.currentDate.getFullYear();
+            const month = state.currentDate.getMonth();
+            let total = 0;
+
+            const filtered = state.transactions.filter(t => {
+                const effDate = getEffectiveDate(t);
+                return effDate.getFullYear() === year && effDate.getMonth() === month && t.accountId === accId;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color: var(--text-secondary); padding: 25px;">Nenhuma compra nesta fatura para este mês.</td></tr>`;
+            } else {
+                filtered.forEach(t => {
+                    total += t.amount;
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${formatDateBR(t.date)}</td>
+                            <td><strong>${t.desc}</strong></td>
+                            <td class="val-expense" style="font-weight: bold;">R$ ${t.amount.toFixed(2).replace('.', ',')}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            totalEl.innerText = `R$ ${total.toFixed(2).replace('.', ',')}`;
         }
 
         function deleteTx(id) {
@@ -1372,6 +1454,7 @@
 
         function renderAccounts() {
             const container = document.getElementById('accounts-container');
+            if(!container) return;
             container.innerHTML = '';
 
             state.accounts.forEach(acc => {
@@ -1422,6 +1505,7 @@
         function renderBudgets(monthTxs) {
             const quickList = document.getElementById('quick-budgets-list');
             const detailList = document.getElementById('budgets-detailed-list');
+            if(!quickList || !detailList) return;
             
             quickList.innerHTML = '';
             detailList.innerHTML = '';
@@ -1462,6 +1546,7 @@
         function generateInsights(income, expense, monthTxs) {
             const banner = document.getElementById('insight-banner');
             const textEl = document.getElementById('insight-text');
+            if(!banner || !textEl) return;
 
             if (monthTxs.length === 0) {
                 banner.style.display = 'none';
@@ -1487,6 +1572,7 @@
 
         function drawCategoryChart() {
             const canvas = document.getElementById('categoryChart');
+            if(!canvas) return;
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -1542,6 +1628,7 @@
 
         function drawHistoryChart() {
             const canvas = document.getElementById('historyChart');
+            if(!canvas) return;
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
