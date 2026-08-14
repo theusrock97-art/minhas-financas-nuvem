@@ -286,6 +286,20 @@
         }
         .btn-submit:hover { opacity: 0.9; }
 
+        .btn-secondary-action {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 15px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .btn-secondary-action:hover { opacity: 0.9; }
+
         /* INSIGHTS BANNER */
         .insight-card {
             background: var(--amber-bg);
@@ -346,6 +360,8 @@
         .action-btns { display: flex; gap: 8px; }
         .btn-del { background: none; border: none; cursor: pointer; color: var(--text-secondary); font-size: 16px; }
         .btn-del:hover { color: var(--red); }
+        .btn-edit { background: none; border: none; cursor: pointer; color: var(--text-secondary); font-size: 16px; }
+        .btn-edit:hover { color: var(--primary); }
 
         /* CHARTS */
         .charts-grid {
@@ -507,7 +523,8 @@
             <button class="tab-btn active" onclick="switchTab(event, 'tab-overview')">📌 Painel & Lançamentos</button>
             <button class="tab-btn" onclick="switchTab(event, 'tab-charts')">📊 Gráficos & Relatórios</button>
             <button class="tab-btn" onclick="switchTab(event, 'tab-accounts')">💳 Contas & Cartões</button>
-            <button class="tab-btn" onclick="switchTab(event, 'tab-budgets')">🎯 Metas & Orçamentos</button>
+            <button class="tab-btn" onclick="switchTab(event, 'tab-budgets')">🎯 Metas & Categorias</button>
+            <button class="tab-btn" onclick="switchTab(event, 'tab-recurring')">🔄 Despesas Fixas</button>
         </div>
 
         <!-- TAB 1: PAINEL & LANÇAMENTOS -->
@@ -521,7 +538,7 @@
             <div class="grid-2">
                 <!-- FORMULÁRIO -->
                 <div class="form-card">
-                    <h3 class="form-title">➕ Nova Transação</h3>
+                    <h3 class="form-title" id="form-title-text">➕ Nova Transação</h3>
                     <form id="transaction-form">
                         <div class="form-grid">
                             <div class="form-group full">
@@ -538,18 +555,23 @@
                             </div>
                             <div class="form-group">
                                 <label>Tipo</label>
-                                <select id="tx-type">
+                                <select id="tx-type" onchange="toggleTransferFields()">
                                     <option value="expense">Saída (-)</option>
                                     <option value="income">Entrada (+)</option>
+                                    <option value="transfer">Transferência ➡️</option>
                                 </select>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group" id="group-category">
                                 <label>Categoria</label>
                                 <select id="tx-category"></select>
                             </div>
                             <div class="form-group">
-                                <label>Conta / Cartão</label>
+                                <label id="label-account">Conta / Cartão</label>
                                 <select id="tx-account"></select>
+                            </div>
+                            <div class="form-group" id="group-dest-account" style="display: none;">
+                                <label>Conta de Destino</label>
+                                <select id="tx-dest-account"></select>
                             </div>
                             <div class="form-group">
                                 <label>Status</label>
@@ -559,7 +581,8 @@
                                 </select>
                             </div>
                         </div>
-                        <button type="submit" class="btn-submit">Salvar na Nuvem</button>
+                        <button type="submit" id="btn-submit-tx" class="btn-submit">Salvar na Nuvem</button>
+                        <button type="button" id="btn-cancel-edit" class="btn-secondary-action" style="display: none; background: #64748b;" onclick="cancelEdit()">Cancelar Edição</button>
                     </form>
                 </div>
 
@@ -584,6 +607,7 @@
                     <option value="all">Todos os Tipos</option>
                     <option value="income">Apenas Entradas</option>
                     <option value="expense">Apenas Saídas</option>
+                    <option value="transfer">Apenas Transferências</option>
                 </select>
             </div>
 
@@ -593,7 +617,7 @@
                         <tr>
                             <th>Data</th>
                             <th>Descrição</th>
-                            <th>Categoria</th>
+                            <th>Categoria / Detalhe</th>
                             <th>Conta</th>
                             <th>Status</th>
                             <th>Valor</th>
@@ -653,8 +677,23 @@
             </div>
         </div>
 
-        <!-- TAB 4: METAS -->
+        <!-- TAB 4: METAS & CATEGORIAS -->
         <div id="tab-budgets" class="tab-content">
+            <!-- GERENCIAR CATEGORIAS -->
+            <div class="form-card">
+                <h3 class="form-title">🏷️ Criar Nova Categoria</h3>
+                <div class="form-grid" style="margin-bottom: 20px;">
+                    <div class="form-group">
+                        <label>Nome da Categoria</label>
+                        <input type="text" id="new-category-input" placeholder="Ex: Pet, Assinaturas, Lanches...">
+                    </div>
+                    <div class="form-group" style="justify-content: flex-end;">
+                        <button class="btn-submit" onclick="addNewCategory()">Adicionar Categoria</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- METAS DE GASTOS -->
             <div class="form-card">
                 <h3 class="form-title">🎯 Limites de Gastos por Categoria</h3>
                 <p style="color: var(--text-secondary); font-size: 14px;">Defina o valor máximo que você planeja gastar em cada categoria por mês.</p>
@@ -672,6 +711,59 @@
                     </div>
                 </div>
                 <div id="budgets-detailed-list"></div>
+            </div>
+        </div>
+
+        <!-- TAB 5: DESPESAS FIXAS / RECORRENTES -->
+        <div id="tab-recurring" class="tab-content">
+            <div class="form-card">
+                <h3 class="form-title">🔄 Despesas Fixas / Recorrentes</h3>
+                <p style="color: var(--text-secondary); font-size: 14px;">Cadastre contas fixas mensais (aluguel, internet, etc.) para gerá-las rapidamente no mês atual.</p>
+                <div class="form-grid" style="margin-bottom: 20px;">
+                    <div class="form-group">
+                        <label>Descrição</label>
+                        <input type="text" id="rec-desc" placeholder="Ex: Aluguel, Internet...">
+                    </div>
+                    <div class="form-group">
+                        <label>Valor (R$)</label>
+                        <input type="number" id="rec-amount" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Dia do Vencimento</label>
+                        <input type="number" id="rec-day" min="1" max="31" placeholder="Ex: 10">
+                    </div>
+                    <div class="form-group">
+                        <label>Categoria</label>
+                        <select id="rec-category"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Conta / Cartão</label>
+                        <select id="rec-account"></select>
+                    </div>
+                    <div class="form-group" style="justify-content: flex-end;">
+                        <button class="btn-submit" onclick="addRecurringExpense()">Salvar Despesa Fixa</button>
+                    </div>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <button class="btn-secondary-action" onclick="generateRecurringForCurrentMonth()">⚡ Gerar Lançamentos deste Mês Automaticamente</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Dia</th>
+                                <th>Descrição</th>
+                                <th>Categoria</th>
+                                <th>Conta</th>
+                                <th>Valor</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recurring-table-body">
+                            <!-- Despesas fixas cadastradas -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </main>
@@ -706,8 +798,10 @@
             categories: DEFAULT_CATEGORIES,
             accounts: DEFAULT_ACCOUNTS,
             budgets: {},
+            recurring: [],
             theme: 'dark',
-            currentDate: new Date()
+            currentDate: new Date(),
+            editingTxId: null
         };
 
         // OBSERVADOR DE AUTENTICAÇÃO DO FIREBASE
@@ -752,6 +846,7 @@
                         state.categories = data.categories || DEFAULT_CATEGORIES;
                         state.accounts = data.accounts || DEFAULT_ACCOUNTS;
                         state.budgets = data.budgets || {};
+                        state.recurring = data.recurring || [];
                     } else {
                         saveUserData(); 
                     }
@@ -766,7 +861,8 @@
                 transactions: state.transactions,
                 categories: state.categories,
                 accounts: state.accounts,
-                budgets: state.budgets
+                budgets: state.budgets,
+                recurring: state.recurring
             }, { merge: true });
         }
 
@@ -786,6 +882,7 @@
             if (targetContent) targetContent.classList.add('active');
 
             if (tabId === 'tab-charts') drawCharts();
+            if (tabId === 'tab-recurring') renderRecurringTable();
         }
 
         function changeMonth(delta) {
@@ -810,30 +907,62 @@
             group.style.display = type === 'credit' ? 'flex' : 'none';
         }
 
-        function initSelects() {
-            const catSelect = document.getElementById('tx-category');
-            const filterCat = document.getElementById('filter-cat');
-            const budgetCat = document.getElementById('budget-cat-select');
-            
-            catSelect.innerHTML = '';
-            filterCat.innerHTML = '<option value="all">Todas as Categorias</option>';
-            budgetCat.innerHTML = '';
+        function toggleTransferFields() {
+            const type = document.getElementById('tx-type').value;
+            const groupDest = document.getElementById('group-dest-account');
+            const groupCat = document.getElementById('group-category');
+            const labelAcc = document.getElementById('label-account');
 
-            state.categories.forEach(c => {
-                catSelect.innerHTML += `<option value="${c}">${c}</option>`;
-                filterCat.innerHTML += `<option value="${c}">${c}</option>`;
-                budgetCat.innerHTML += `<option value="${c}">${c}</option>`;
+            if (type === 'transfer') {
+                groupDest.style.display = 'flex';
+                groupCat.style.display = 'none';
+                labelAcc.innerText = 'Conta de Origem';
+            } else {
+                groupDest.style.display = 'none';
+                groupCat.style.display = 'flex';
+                labelAcc.innerText = 'Conta / Cartão';
+            }
+        }
+
+        function initSelects() {
+            const selects = ['tx-category', 'filter-cat', 'budget-cat-select', 'rec-category'];
+            selects.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const isFilter = id === 'filter-cat';
+                el.innerHTML = isFilter ? '<option value="all">Todas as Categorias</option>' : '';
+                state.categories.forEach(c => {
+                    el.innerHTML += `<option value="${c}">${c}</option>`;
+                });
             });
 
-            const accSelect = document.getElementById('tx-account');
-            accSelect.innerHTML = '';
-            state.accounts.forEach(a => {
-                accSelect.innerHTML += `<option value="${a.id}">${a.name}</option>`;
+            const accountSelects = ['tx-account', 'tx-dest-account', 'rec-account'];
+            accountSelects.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.innerHTML = '';
+                state.accounts.forEach(a => {
+                    el.innerHTML += `<option value="${a.id}">${a.name}</option>`;
+                });
             });
 
             if (!document.getElementById('tx-date').value) {
                 document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
             }
+        }
+
+        // ADICIONAR CATEGORIA PERSONALIZADA
+        function addNewCategory() {
+            const input = document.getElementById('new-category-input');
+            const name = input.value.trim();
+            if (!name) return alert('Digite o nome da categoria!');
+            if (state.categories.includes(name)) return alert('Esta categoria já existe!');
+
+            state.categories.push(name);
+            saveUserData();
+            initSelects();
+            input.value = '';
+            alert('Categoria criada com sucesso!');
         }
 
         // CALCULA A DATA EFETIVA CONSIDERANDO O FECHAMENTO DO CARTÃO
@@ -866,7 +995,7 @@
 
             monthTxs.forEach(t => {
                 if (t.type === 'income') incomeMonth += t.amount;
-                else expenseMonth += t.amount;
+                else if (t.type === 'expense') expenseMonth += t.amount;
             });
 
             const balanceMonth = incomeMonth - expenseMonth;
@@ -880,7 +1009,8 @@
             state.transactions.forEach(t => {
                 if (t.status === 'paid') {
                     if (t.type === 'income') totalPatrimony += t.amount;
-                    else totalPatrimony -= t.amount;
+                    else if (t.type === 'expense') totalPatrimony -= t.amount;
+                    // Transferências não alteram o patrimônio geral, apenas o saldo entre contas
                 }
             });
             document.getElementById('dash-total-patrimony').innerText = `R$ ${totalPatrimony.toFixed(2).replace('.', ',')}`;
@@ -891,27 +1021,86 @@
             generateInsights(incomeMonth, expenseMonth, monthTxs);
         }
 
-        // SUBMETER TRANSAÇÃO
+        // SUBMETER TRANSAÇÃO (NOVA OU EDITADA)
         document.getElementById('transaction-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const desc = document.getElementById('tx-desc').value;
             const amount = parseFloat(document.getElementById('tx-amount').value);
             const date = document.getElementById('tx-date').value;
             const type = document.getElementById('tx-type').value;
-            const category = document.getElementById('tx-category').value;
+            const category = type === 'transfer' ? 'Transferência' : document.getElementById('tx-category').value;
             const accountId = document.getElementById('tx-account').value;
+            const destAccountId = type === 'transfer' ? document.getElementById('tx-dest-account').value : '';
             const status = document.getElementById('tx-status').value;
 
             if (!desc || isNaN(amount) || !date) return;
+            if (type === 'transfer' && accountId === destAccountId) {
+                return alert('A conta de origem e destino não podem ser iguais!');
+            }
 
-            const id = 'tx_' + Date.now();
-            state.transactions.push({ id, desc, amount, date, type, category, accountId, status });
+            if (state.editingTxId) {
+                // Editando transação existente
+                const idx = state.transactions.findIndex(t => t.id === state.editingTxId);
+                if (idx !== -1) {
+                    state.transactions[idx] = {
+                        id: state.editingTxId,
+                        desc, amount, date, type, category, accountId, destAccountId, status
+                    };
+                }
+                state.editingTxId = null;
+                document.getElementById('form-title-text').innerText = '➕ Nova Transação';
+                document.getElementById('btn-submit-tx').innerText = 'Salvar na Nuvem';
+                document.getElementById('btn-cancel-edit').style.display = 'none';
+            } else {
+                // Criando nova transação
+                const id = 'tx_' + Date.now();
+                state.transactions.push({ id, desc, amount, date, type, category, accountId, destAccountId, status });
+            }
             
             saveUserData();
 
             document.getElementById('tx-desc').value = '';
             document.getElementById('tx-amount').value = '';
+            document.getElementById('tx-type').value = 'expense';
+            toggleTransferFields();
         });
+
+        function editTx(id) {
+            const t = state.transactions.find(item => item.id === id);
+            if (!t) return;
+
+            state.editingTxId = t.id;
+            document.getElementById('tx-desc').value = t.desc;
+            document.getElementById('tx-amount').value = t.amount;
+            document.getElementById('tx-date').value = t.date;
+            document.getElementById('tx-type').value = t.type;
+            toggleTransferFields();
+
+            if (t.type === 'transfer') {
+                document.getElementById('tx-account').value = t.accountId;
+                document.getElementById('tx-dest-account').value = t.destAccountId || '';
+            } else {
+                document.getElementById('tx-category').value = t.category;
+                document.getElementById('tx-account').value = t.accountId;
+            }
+            document.getElementById('tx-status').value = t.status;
+
+            document.getElementById('form-title-text').innerText = '✏️ Editando Transação';
+            document.getElementById('btn-submit-tx').innerText = 'Atualizar Transação';
+            document.getElementById('btn-cancel-edit').style.display = 'block';
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelEdit() {
+            state.editingTxId = null;
+            document.getElementById('transaction-form').reset();
+            document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('form-title-text').innerText = '➕ Nova Transação';
+            document.getElementById('btn-submit-tx').innerText = 'Salvar na Nuvem';
+            document.getElementById('btn-cancel-edit').style.display = 'none';
+            toggleTransferFields();
+        }
 
         function renderTransactions() {
             const tbody = document.getElementById('tx-table-body');
@@ -941,25 +1130,39 @@
 
             filtered.forEach(t => {
                 const acc = state.accounts.find(a => a.id === t.accountId) || { name: 'Geral' };
-                const isInc = t.type === 'income';
-                const colorClass = isInc ? 'val-income' : 'val-expense';
-                const sign = isInc ? '+' : '-';
+                let catBadge = `<span class="badge badge-cat">${t.category}</span>`;
+                let amountDisplay = '';
+                let colorClass = '';
+
+                if (t.type === 'income') {
+                    colorClass = 'val-income';
+                    amountDisplay = `+ R$ ${t.amount.toFixed(2).replace('.', ',')}`;
+                } else if (t.type === 'expense') {
+                    colorClass = 'val-expense';
+                    amountDisplay = `- R$ ${t.amount.toFixed(2).replace('.', ',')}`;
+                } else if (t.type === 'transfer') {
+                    const destAcc = state.accounts.find(a => a.id === t.destAccountId) || { name: 'Outra' };
+                    catBadge = `<span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa;">Transferência</span>`;
+                    colorClass = 'val-balance';
+                    amountDisplay = `R$ ${t.amount.toFixed(2).replace('.', ',')} (${acc.name} ➡️ ${destAcc.name})`;
+                }
 
                 tbody.innerHTML += `
                     <tr>
                         <td>${formatDateBR(t.date)}</td>
                         <td><strong>${t.desc}</strong></td>
-                        <td><span class="badge badge-cat">${t.category}</span></td>
+                        <td>${catBadge}</td>
                         <td><span class="badge badge-acc">${acc.name}</span></td>
                         <td>
                             <span class="badge ${t.status === 'paid' ? 'badge-status-paid' : 'badge-status-pending'}">
                                 ${t.status === 'paid' ? 'Concluído' : 'Pendente'}
                             </span>
                         </td>
-                        <td class="${colorClass}" style="font-weight: bold;">${sign} R$ ${t.amount.toFixed(2).replace('.', ',')}</td>
+                        <td class="${colorClass}" style="font-weight: bold;">${amountDisplay}</td>
                         <td>
                             <div class="action-btns">
-                                <button class="btn-del" onclick="deleteTx('${t.id || t.desc}')" title="Excluir">🗑️</button>
+                                <button class="btn-edit" onclick="editTx('${t.id}')" title="Editar">✏️</button>
+                                <button class="btn-del" onclick="deleteTx('${t.id}')" title="Excluir">🗑️</button>
                             </div>
                         </td>
                     </tr>
@@ -967,11 +1170,103 @@
             });
         }
 
-        function deleteTx(idOrDesc) {
+        function deleteTx(id) {
             if (confirm('Deseja apagar esta transação?')) {
-                state.transactions = state.transactions.filter(t => (t.id ? t.id !== idOrDesc : t.desc !== idOrDesc));
+                state.transactions = state.transactions.filter(t => t.id !== id);
+                if (state.editingTxId === id) cancelEdit();
                 saveUserData();
             }
+        }
+
+        // GERENCIAR DESPESAS FIXAS / RECORRENTES
+        function addRecurringExpense() {
+            const desc = document.getElementById('rec-desc').value.trim();
+            const amount = parseFloat(document.getElementById('rec-amount').value);
+            const day = parseInt(document.getElementById('rec-day').value);
+            const category = document.getElementById('rec-category').value;
+            const accountId = document.getElementById('rec-account').value;
+
+            if (!desc || isNaN(amount) || isNaN(day)) return alert('Preencha todos os campos da despesa fixa!');
+
+            const id = 'rec_' + Date.now();
+            state.recurring.push({ id, desc, amount, day, category, accountId });
+            saveUserData();
+
+            document.getElementById('rec-desc').value = '';
+            document.getElementById('rec-amount').value = '';
+            document.getElementById('rec-day').value = '';
+            renderRecurringTable();
+            alert('Despesa fixa cadastrada com sucesso!');
+        }
+
+        function deleteRecurring(id) {
+            if (confirm('Deseja remover esta despesa fixa?')) {
+                state.recurring = state.recurring.filter(r => r.id !== id);
+                saveUserData();
+                renderRecurringTable();
+            }
+        }
+
+        function renderRecurringTable() {
+            const tbody = document.getElementById('recurring-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            if (state.recurring.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color: var(--text-secondary); padding: 25px;">Nenhuma despesa fixa cadastrada.</td></tr>`;
+                return;
+            }
+
+            state.recurring.forEach(r => {
+                const acc = state.accounts.find(a => a.id === r.accountId) || { name: 'Geral' };
+                tbody.innerHTML += `
+                    <tr>
+                        <td>Dia ${r.day}</td>
+                        <td><strong>${r.desc}</strong></td>
+                        <td><span class="badge badge-cat">${r.category}</span></td>
+                        <td><span class="badge badge-acc">${acc.name}</span></td>
+                        <td class="val-expense" style="font-weight: bold;">R$ ${r.amount.toFixed(2).replace('.', ',')}</td>
+                        <td>
+                            <button class="btn-del" onclick="deleteRecurring('${r.id}')" title="Excluir">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function generateRecurringForCurrentMonth() {
+            if (state.recurring.length === 0) return alert('Não há despesas fixas cadastradas.');
+            
+            const year = state.currentDate.getFullYear();
+            const month = state.currentDate.getMonth();
+            let addedCount = 0;
+
+            state.recurring.forEach(r => {
+                const dayStr = String(r.day).padStart(2, '0');
+                const monthStr = String(month + 1).padStart(2, '0');
+                const dateStr = `${year}-${monthStr}-${dayStr}`;
+
+                // Verifica se já existe transação idêntica neste mês para evitar duplicata
+                const exists = state.transactions.some(t => t.desc === r.desc && t.date === dateStr && t.amount === r.amount);
+                if (!exists) {
+                    const id = 'tx_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+                    state.transactions.push({
+                        id,
+                        desc: r.desc,
+                        amount: r.amount,
+                        date: dateStr,
+                        type: 'expense',
+                        category: r.category,
+                        accountId: r.accountId,
+                        status: 'pending'
+                    });
+                    addedCount++;
+                }
+            });
+
+            saveUserData();
+            updateUI();
+            alert(`${addedCount} lançamentos fixos gerados para este mês com status Pendente!`);
         }
 
         function addAccount() {
@@ -1010,8 +1305,15 @@
 
             state.accounts.forEach(acc => {
                 let bal = Number(acc.initialBalance || 0);
-                state.transactions.filter(t => t.accountId === acc.id && t.status === 'paid').forEach(t => {
-                    bal += t.type === 'income' ? t.amount : -t.amount;
+                state.transactions.filter(t => t.status === 'paid').forEach(t => {
+                    if (t.accountId === acc.id) {
+                        if (t.type === 'income') bal += t.amount;
+                        else if (t.type === 'expense') bal -= t.amount;
+                        else if (t.type === 'transfer') bal -= t.amount;
+                    }
+                    if (t.type === 'transfer' && t.destAccountId === acc.id) {
+                        bal += t.amount;
+                    }
                 });
 
                 const subtitle = acc.type === 'credit' ? `Cartão (Fechamento: dia ${acc.closingDay})` : 'Conta Corrente';
@@ -1189,7 +1491,7 @@
                     const effDate = getEffectiveDate(t);
                     if (effDate.getFullYear() === m.year && effDate.getMonth() === m.month) {
                         if (t.type === 'income') inc += t.amount;
-                        else exp += t.amount;
+                        else if (t.type === 'expense') exp += t.amount;
                     }
                 });
                 dataInc.push(inc);
