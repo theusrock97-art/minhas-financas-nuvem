@@ -558,11 +558,11 @@
                                 <input type="text" id="tx-desc" placeholder="Ex: Supermercado, Salário..." required autocomplete="off">
                             </div>
                             <div class="form-group">
-                                <label>Valor (R$)</label>
+                                <label>Valor Total (R$)</label>
                                 <input type="number" id="tx-amount" step="0.01" placeholder="0.00" required>
                             </div>
                             <div class="form-group">
-                                <label>Data</label>
+                                <label>Data da Compra</label>
                                 <input type="date" id="tx-date" required>
                             </div>
                             <div class="form-group">
@@ -591,6 +591,18 @@
                                     <option value="paid">Pago / Concluído</option>
                                     <option value="pending">Pendente / Agendado</option>
                                 </select>
+                            </div>
+
+                            <!-- OPÇÃO DE PARCELAMENTO -->
+                            <div class="form-group full" id="group-installment-checkbox" style="display: flex;">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; text-transform: none; font-weight: 500; color: var(--text-primary);">
+                                    <input type="checkbox" id="tx-is-installment" onchange="toggleInstallmentFields()" style="width: auto; height: auto;"> 
+                                    <span>💳 É uma compra parcelada?</span>
+                                </label>
+                            </div>
+                            <div class="form-group" id="group-installments-count" style="display: none;">
+                                <label>Número de Parcelas</label>
+                                <input type="number" id="tx-installments" min="2" max="48" value="2">
                             </div>
                         </div>
                         <button type="submit" id="btn-submit-tx" class="btn-submit">Salvar na Nuvem</button>
@@ -924,16 +936,34 @@
             const groupDest = document.getElementById('group-dest-account');
             const groupCat = document.getElementById('group-category');
             const labelAcc = document.getElementById('label-account');
+            const groupInstCb = document.getElementById('group-installment-checkbox');
+            const groupInstCount = document.getElementById('group-installments-count');
 
             if (type === 'transfer') {
                 groupDest.style.display = 'flex';
                 groupCat.style.display = 'none';
                 labelAcc.innerText = 'Conta de Origem';
+                groupInstCb.style.display = 'none';
+                groupInstCount.style.display = 'none';
+            } else if (type === 'expense') {
+                groupDest.style.display = 'none';
+                groupCat.style.display = 'flex';
+                labelAcc.innerText = 'Conta / Cartão';
+                groupInstCb.style.display = 'flex';
+                toggleInstallmentFields();
             } else {
                 groupDest.style.display = 'none';
                 groupCat.style.display = 'flex';
                 labelAcc.innerText = 'Conta / Cartão';
+                groupInstCb.style.display = 'none';
+                groupInstCount.style.display = 'none';
             }
+        }
+
+        function toggleInstallmentFields() {
+            const isInst = document.getElementById('tx-is-installment').checked;
+            const groupInstCount = document.getElementById('group-installments-count');
+            groupInstCount.style.display = isInst ? 'flex' : 'none';
         }
 
         function initSelects() {
@@ -1044,6 +1074,9 @@
             const destAccountId = type === 'transfer' ? document.getElementById('tx-dest-account').value : '';
             const status = document.getElementById('tx-status').value;
 
+            const isInstallment = document.getElementById('tx-is-installment').checked && type === 'expense';
+            const installmentsCount = parseInt(document.getElementById('tx-installments').value) || 1;
+
             if (!desc || isNaN(amount) || !date) return;
             if (type === 'transfer' && accountId === destAccountId) {
                 return alert('A conta de origem e destino não podem ser iguais!');
@@ -1061,6 +1094,35 @@
                 document.getElementById('form-title-text').innerText = '➕ Nova Transação';
                 document.getElementById('btn-submit-tx').innerText = 'Salvar na Nuvem';
                 document.getElementById('btn-cancel-edit').style.display = 'none';
+            } else if (isInstallment && installmentsCount > 1) {
+                // GERAR PARCELAMENTO MÊS A MÊS
+                const totalAmount = amount;
+                const installmentAmount = totalAmount / installmentsCount;
+                const [y, m, d] = date.split('-').map(Number);
+
+                for (let i = 0; i < installmentsCount; i++) {
+                    let targetDate = new Date(y, m - 1 + i, d);
+                    const tY = targetDate.getFullYear();
+                    const tM = String(targetDate.getMonth() + 1).padStart(2, '0');
+                    const tD = String(targetDate.getDate()).padStart(2, '0');
+                    const dateStr = `${tY}-${tM}-${tD}`;
+
+                    const id = 'tx_' + Date.now() + '_' + i;
+                    const instDesc = `${desc} (${i + 1}/${installmentsCount})`;
+                    const instStatus = (i === 0) ? status : 'pending';
+
+                    state.transactions.push({
+                        id,
+                        desc: instDesc,
+                        amount: installmentAmount,
+                        date: dateStr,
+                        type,
+                        category,
+                        accountId,
+                        destAccountId,
+                        status: instStatus
+                    });
+                }
             } else {
                 const id = 'tx_' + Date.now();
                 state.transactions.push({ id, desc, amount, date, type, category, accountId, destAccountId, status });
@@ -1070,6 +1132,7 @@
 
             document.getElementById('tx-desc').value = '';
             document.getElementById('tx-amount').value = '';
+            document.getElementById('tx-is-installment').checked = false;
             document.getElementById('tx-type').value = 'expense';
             toggleTransferFields();
         });
