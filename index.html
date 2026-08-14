@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minhas Finanças - PRO MAX (Nuvem)</title>
 
+    <!-- GOOGLE FONTS: SORA -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <!-- FIREBASE SDKs COMPAT (NUVEM EM TEMPO REAL) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -46,7 +51,7 @@
         * { box-sizing: border-box; transition: background-color 0.2s, color 0.2s; }
 
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-family: 'Sora', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-primary);
             margin: 0;
@@ -101,6 +106,7 @@
             display: flex;
             align-items: center;
             gap: 6px;
+            font-family: 'Sora', sans-serif;
         }
         .btn-icon:hover { background: rgba(255, 255, 255, 0.2); }
 
@@ -123,6 +129,7 @@
             cursor: pointer;
             font-size: 16px;
             font-weight: bold;
+            font-family: 'Sora', sans-serif;
         }
         .month-btn:hover { background: var(--primary); }
 
@@ -200,6 +207,7 @@
             border-bottom: 3px solid transparent;
             margin-bottom: -2px;
             white-space: nowrap;
+            font-family: 'Sora', sans-serif;
         }
 
         .tab-btn.active {
@@ -269,6 +277,7 @@
             border-radius: 8px;
             font-size: 14px;
             outline: none;
+            font-family: 'Sora', sans-serif;
         }
         input:focus, select:focus { border-color: var(--primary); }
 
@@ -283,6 +292,7 @@
             font-size: 15px;
             width: 100%;
             margin-top: 10px;
+            font-family: 'Sora', sans-serif;
         }
         .btn-submit:hover { opacity: 0.9; }
 
@@ -297,6 +307,7 @@
             font-size: 15px;
             width: 100%;
             margin-top: 10px;
+            font-family: 'Sora', sans-serif;
         }
         .btn-secondary-action:hover { opacity: 0.9; }
 
@@ -431,6 +442,7 @@
             justify-content: center;
             gap: 10px;
             margin-top: 20px;
+            font-family: 'Sora', sans-serif;
         }
 
         @media print {
@@ -1010,7 +1022,6 @@
                 if (t.status === 'paid') {
                     if (t.type === 'income') totalPatrimony += t.amount;
                     else if (t.type === 'expense') totalPatrimony -= t.amount;
-                    // Transferências não alteram o patrimônio geral, apenas o saldo entre contas
                 }
             });
             document.getElementById('dash-total-patrimony').innerText = `R$ ${totalPatrimony.toFixed(2).replace('.', ',')}`;
@@ -1039,7 +1050,6 @@
             }
 
             if (state.editingTxId) {
-                // Editando transação existente
                 const idx = state.transactions.findIndex(t => t.id === state.editingTxId);
                 if (idx !== -1) {
                     state.transactions[idx] = {
@@ -1052,7 +1062,6 @@
                 document.getElementById('btn-submit-tx').innerText = 'Salvar na Nuvem';
                 document.getElementById('btn-cancel-edit').style.display = 'none';
             } else {
-                // Criando nova transação
                 const id = 'tx_' + Date.now();
                 state.transactions.push({ id, desc, amount, date, type, category, accountId, destAccountId, status });
             }
@@ -1246,7 +1255,6 @@
                 const monthStr = String(month + 1).padStart(2, '0');
                 const dateStr = `${year}-${monthStr}-${dayStr}`;
 
-                // Verifica se já existe transação idêntica neste mês para evitar duplicata
                 const exists = state.transactions.some(t => t.desc === r.desc && t.date === dateStr && t.amount === r.amount);
                 if (!exists) {
                     const id = 'tx_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
@@ -1436,7 +1444,7 @@
 
             if (totalSpent === 0) {
                 ctx.fillStyle = "#94a3b8";
-                ctx.font = "14px sans-serif";
+                ctx.font = "14px 'Sora', sans-serif";
                 ctx.textAlign = "center";
                 ctx.fillText("Sem despesas cadastradas no mês", canvas.width / 2, canvas.height / 2);
                 return;
@@ -1524,7 +1532,7 @@
                 ctx.fillRect(x + 16, canvas.height - padding - hExp, 14, hExp);
 
                 ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text-primary');
-                ctx.font = "11px sans-serif";
+                ctx.font = "11px 'Sora', sans-serif";
                 ctx.textAlign = "center";
                 ctx.fillText(m.label, x + 15, canvas.height - padding + 15);
             });
