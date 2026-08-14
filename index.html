@@ -4,54 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minhas Finanças - PRO MAX (Nuvem)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <style>
-        :root {
-            --bg-color: #0f172a; --card-bg: #1e293b; --text-primary: #f8fafc;
-            --text-secondary: #94a3b8; --primary: #3b82f6; --primary-hover: #2563eb;
-            --green: #10b981; --green-bg: rgba(16, 185, 129, 0.15);
-            --red: #ef4444; --red-bg: rgba(239, 68, 68, 0.15);
-            --amber: #f59e0b; --amber-bg: rgba(245, 158, 11, 0.15);
-            --border: #334155; --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            --radius: 12px; --header-bg: #020617;
-        }
-        [data-theme="light"] { --bg-color: #f4f6f9; --card-bg: #ffffff; --text-primary: #1e293b; --text-secondary: #64748b; --border: #e2e8f0; --shadow: 0 4px 12px rgba(0, 0, 0, 0.05); }
+        :root { --bg-color: #0f172a; --card-bg: #1e293b; --text-primary: #f8fafc; --text-secondary: #94a3b8; --primary: #3b82f6; --green: #10b981; --red: #ef4444; --amber: #f59e0b; --border: #334155; --shadow: 0 4px 12px rgba(0, 0, 0, 0.3); --radius: 12px; --header-bg: #020617; }
         * { box-sizing: border-box; }
         body { font-family: 'Sora', sans-serif; background-color: var(--bg-color); color: var(--text-primary); margin: 0; min-height: 100vh; }
-        
+        .user-bar { background: rgba(255, 255, 255, 0.05); padding: 10px 20px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); }
+        header { background-color: var(--header-bg); padding: 20px 0 60px 0; }
         .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
-        .user-bar { background: rgba(255, 255, 255, 0.05); padding: 10px 20px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); font-size: 14px; }
-        header { background-color: var(--header-bg); color: #ffffff; padding: 20px 0 60px 0; }
         .btn-icon { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
-        
         .month-selector { display: flex; align-items: center; justify-content: center; gap: 15px; margin-top: 15px; }
         .month-btn { background: rgba(255, 255, 255, 0.15); border: none; color: #fff; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-weight: bold; }
         .current-month { font-size: 18px; font-weight: 600; min-width: 170px; text-align: center; }
-
         .dashboard-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: -40px; }
         .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
-        .card-header { color: var(--text-secondary); font-size: 13px; font-weight: 600; text-transform: uppercase; }
-        .card-value { font-size: 26px; font-weight: 700; margin-top: 10px; }
-        
         .tabs { display: flex; gap: 10px; margin: 25px 0 15px 0; border-bottom: 2px solid var(--border); overflow-x: auto; }
         .tab-btn { background: none; border: none; color: var(--text-secondary); padding: 10px 18px; font-size: 15px; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; }
         .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
         .tab-content { display: none; } .tab-content.active { display: block; }
-
         .form-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; margin-bottom: 20px; }
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
         input, select { background: var(--bg-color); border: 1px solid var(--border); color: var(--text-primary); padding: 11px 14px; border-radius: 8px; font-size: 14px; width: 100%; }
-        
         .table-container { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 14px; }
         th { background: var(--bg-color); color: var(--text-secondary); padding: 14px 18px; border-bottom: 1px solid var(--border); }
         td { padding: 14px 18px; border-bottom: 1px solid var(--border); }
-        
-        .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
         .val-expense { color: var(--red); }
         .val-income { color: var(--green); }
         .btn-del { background: none; border: none; cursor: pointer; color: var(--red); }
@@ -59,10 +42,7 @@
 </head>
 <body data-theme="dark">
 
-    <div class="user-bar">
-        <span id="user-display-name">Carregando...</span>
-        <button class="btn-icon" style="background: var(--red-bg); color: var(--red);" onclick="auth.signOut()">Sair</button>
-    </div>
+    <div class="user-bar"><span id="user-display-name">Carregando...</span> <button onclick="auth.signOut()" class="btn-icon">Sair</button></div>
 
     <header>
         <div class="container">
@@ -79,9 +59,10 @@
             <button class="tab-btn active" onclick="switchTab(event, 'tab-overview')">📌 Lançamentos</button>
             <button class="tab-btn" onclick="switchTab(event, 'tab-invoices')">💳 Faturas</button>
             <button class="tab-btn" onclick="switchTab(event, 'tab-accounts')">⚙️ Contas</button>
+            <button class="tab-btn" onclick="switchTab(event, 'tab-charts')">📊 Gráficos</button>
         </div>
 
-        <!-- ABA LANÇAMENTOS -->
+        <!-- ABA 1: LANÇAMENTOS -->
         <div id="tab-overview" class="tab-content active">
             <div class="form-card">
                 <form id="tx-form">
@@ -96,48 +77,42 @@
                     <button type="submit" class="btn-icon" style="background: var(--green); width: 100%; margin-top: 10px;">Salvar</button>
                 </form>
             </div>
-            <div class="table-container">
-                <table id="tx-table">
-                    <thead><tr><th>Data</th><th>Desc</th><th>Valor</th><th>Ações</th></tr></thead>
-                    <tbody id="tx-body"></tbody>
-                </table>
-            </div>
+            <div class="table-container"><table id="tx-table"><thead><tr><th>Data</th><th>Desc</th><th>Valor</th><th>Ações</th></tr></thead><tbody id="tx-body"></tbody></table></div>
         </div>
 
-        <!-- NOVA ABA FATURAS -->
+        <!-- ABA 2: FATURAS -->
         <div id="tab-invoices" class="tab-content">
             <div class="form-card">
-                <h3 class="form-title">💳 Fechamento de Fatura</h3>
+                <h3>💳 Fechamento de Fatura</h3>
                 <div class="form-grid">
-                    <div class="form-group">
-                        <label>Selecione o Cartão</label>
-                        <select id="invoice-account-select" onchange="renderInvoices()"></select>
-                    </div>
+                    <select id="invoice-account-select" onchange="renderInvoices()"></select>
                 </div>
-                <div class="card" style="margin-top: 20px; text-align: center;">
-                    <div class="card-header">Total Faturado no Mês</div>
-                    <div class="card-value val-expense" id="invoice-total">R$ 0,00</div>
+                <div style="margin-top:20px; text-align:center;">
+                    <div style="font-size: 14px; color: var(--text-secondary);">Total da Fatura</div>
+                    <div style="font-size: 32px; font-weight: bold; color: var(--red);" id="invoice-total">R$ 0,00</div>
                 </div>
             </div>
             <div class="table-container">
-                <table>
-                    <thead><tr><th>Data</th><th>Descrição</th><th>Valor</th></tr></thead>
-                    <tbody id="invoice-body"></tbody>
-                </table>
+                <table><thead><tr><th>Data</th><th>Descrição</th><th>Valor</th></tr></thead><tbody id="invoice-body"></tbody></table>
             </div>
         </div>
 
-        <!-- ABA CONTAS -->
+        <!-- ABA 3: CONTAS -->
         <div id="tab-accounts" class="tab-content">
             <div class="form-card">
-                <h3>Cadastrar Conta/Cartão</h3>
+                <h3>Cadastrar Cartão/Conta</h3>
                 <div class="form-grid">
                     <input type="text" id="acc-name" placeholder="Nome">
                     <select id="acc-type"><option value="normal">Conta</option><option value="credit">Cartão</option></select>
                     <input type="number" id="acc-closing" placeholder="Dia Fechamento (Cartão)">
-                    <button onclick="addAccount()" class="btn-icon">Adicionar</button>
+                    <button onclick="addAccount()" class="btn-icon" style="background:var(--primary)">Adicionar</button>
                 </div>
             </div>
+        </div>
+
+        <!-- ABA 4: GRÁFICOS -->
+        <div id="tab-charts" class="tab-content">
+            <div class="card"><h3>Gráficos (Implementação Simples)</h3><p>Verifique o saldo mês a mês no console ou dashboard principal.</p></div>
         </div>
     </main>
 
@@ -145,10 +120,10 @@
         const firebaseConfig = { apiKey: "AIzaSyAACom-B7m3usJCbL3AtLnH1-2MaXYy8r0", projectId: "minhas-financas-17a62" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth();
         
         let state = { transactions: [], accounts: [], currentDate: new Date() };
 
-        // Carrega dados
         auth.onAuthStateChanged(user => {
             if(user) {
                 db.collection('users').doc(user.uid).onSnapshot(doc => {
@@ -158,6 +133,9 @@
                         updateAllViews();
                     }
                 });
+            } else {
+                // Login forçado se não logado
+                auth.signInAnonymously(); 
             }
         });
 
@@ -167,6 +145,18 @@
             document.getElementById(id).classList.add('active');
             e.currentTarget.classList.add('active');
             if(id === 'tab-invoices') renderInvoices();
+        }
+
+        function initSelects() {
+            const selects = ['tx-account', 'invoice-account-select'];
+            selects.forEach(id => {
+                const s = document.getElementById(id);
+                s.innerHTML = '';
+                state.accounts.forEach(a => {
+                    if(id === 'invoice-account-select' && a.type !== 'credit') return;
+                    s.innerHTML += `<option value="${a.id}">${a.name}</option>`;
+                });
+            });
         }
 
         function getEffectiveDate(t) {
@@ -179,18 +169,15 @@
             return dateObj;
         }
 
-        function initSelects() {
-            const selectAccs = document.querySelectorAll('select[id*="account"]');
-            selectAccs.forEach(s => {
-                s.innerHTML = '';
-                state.accounts.forEach(a => {
-                    if(s.id === 'invoice-account-select' && a.type !== 'credit') return; // Filtra só cartões
-                    s.innerHTML += `<option value="${a.id}">${a.name}</option>`;
-                });
+        function renderTransactions() {
+            const tbody = document.getElementById('tx-body');
+            tbody.innerHTML = '';
+            state.transactions.forEach(t => {
+                tbody.innerHTML += `<tr><td>${t.date}</td><td>${t.desc}</td><td class="${t.type === 'expense' ? 'val-expense' : 'val-income'}">R$ ${t.amount.toFixed(2)}</td>
+                <td><button class="btn-del" onclick="deleteTx('${t.id}')">🗑️</button></td></tr>`;
             });
         }
 
-        // Renderiza Faturas
         function renderInvoices() {
             const accId = document.getElementById('invoice-account-select').value;
             const tbody = document.getElementById('invoice-body');
@@ -210,12 +197,12 @@
                 total += t.amount;
                 tbody.innerHTML += `<tr><td>${t.date}</td><td>${t.desc}</td><td class="val-expense">R$ ${t.amount.toFixed(2)}</td></tr>`;
             });
-
             totalEl.innerText = `R$ ${total.toFixed(2).replace('.', ',')}`;
         }
 
         function updateAllViews() {
             document.getElementById('display-month').innerText = state.currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+            renderTransactions();
             renderInvoices();
         }
 
@@ -227,24 +214,33 @@
         function addAccount() {
             const newAcc = { id: 'acc_'+Date.now(), name: document.getElementById('acc-name').value, type: document.getElementById('acc-type').value, closingDay: document.getElementById('acc-closing').value };
             state.accounts.push(newAcc);
-            db.collection('users').doc(auth.currentUser.uid).set(state);
+            db.collection('users').doc(auth.currentUser.uid).set(state, {merge:true});
             initSelects();
         }
 
         document.getElementById('tx-form').addEventListener('submit', (e) => {
             e.preventDefault();
-            const newTx = {
-                id: 'tx_'+Date.now(),
-                desc: document.getElementById('tx-desc').value,
-                amount: parseFloat(document.getElementById('tx-amount').value),
-                date: new Date().toISOString().split('T')[0],
-                accountId: document.getElementById('tx-account').value,
-                type: document.getElementById('tx-type').value
-            };
-            state.transactions.push(newTx);
-            db.collection('users').doc(auth.currentUser.uid).set(state);
+            const desc = document.getElementById('tx-desc').value;
+            const amount = parseFloat(document.getElementById('tx-amount').value);
+            const isInstallment = document.getElementById('tx-is-installment').checked;
+            const count = parseInt(document.getElementById('tx-installments').value);
+            
+            if(isInstallment) {
+                for(let i=0; i<count; i++) {
+                    state.transactions.push({ id: 'tx_'+Date.now()+i, desc: `${desc} (${i+1}/${count})`, amount: amount/count, date: new Date().toISOString().split('T')[0], accountId: document.getElementById('tx-account').value, type: 'expense' });
+                }
+            } else {
+                state.transactions.push({ id: 'tx_'+Date.now(), desc, amount, date: new Date().toISOString().split('T')[0], accountId: document.getElementById('tx-account').value, type: document.getElementById('tx-type').value });
+            }
+            
+            db.collection('users').doc(auth.currentUser.uid).set(state, {merge:true});
             document.getElementById('tx-form').reset();
         });
+
+        function deleteTx(id) {
+            state.transactions = state.transactions.filter(t => t.id !== id);
+            db.collection('users').doc(auth.currentUser.uid).set(state, {merge:true});
+        }
     </script>
 </body>
 </html>
