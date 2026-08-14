@@ -90,7 +90,7 @@
                         <input type="number" id="tx-amount" step="0.01" placeholder="Valor" required>
                         <select id="tx-account"></select>
                         <select id="tx-type"><option value="expense">Saída</option><option value="income">Entrada</option></select>
-                        <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="tx-is-installment"> Parcelado?</label>
+                        <label><input type="checkbox" id="tx-is-installment"> Parcelado?</label>
                         <input type="number" id="tx-installments" placeholder="Qtd" value="2">
                     </div>
                     <button type="submit" class="btn-icon" style="background: var(--green); width: 100%; margin-top: 10px;">Salvar</button>
@@ -145,14 +145,12 @@
         const firebaseConfig = { apiKey: "AIzaSyAACom-B7m3usJCbL3AtLnH1-2MaXYy8r0", projectId: "minhas-financas-17a62" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        const auth = firebase.auth(); // Correção: Inicialização do Auth adicionada
         
         let state = { transactions: [], accounts: [], currentDate: new Date() };
 
         // Carrega dados
         auth.onAuthStateChanged(user => {
             if(user) {
-                document.getElementById('user-display-name').innerText = user.email || user.uid;
                 db.collection('users').doc(user.uid).onSnapshot(doc => {
                     if(doc.exists) {
                         state = { ...state, ...doc.data() };
@@ -160,8 +158,6 @@
                         updateAllViews();
                     }
                 });
-            } else {
-                auth.signInAnonymously();
             }
         });
 
@@ -186,44 +182,11 @@
         function initSelects() {
             const selectAccs = document.querySelectorAll('select[id*="account"]');
             selectAccs.forEach(s => {
-                const currentVal = s.value;
                 s.innerHTML = '';
                 state.accounts.forEach(a => {
                     if(s.id === 'invoice-account-select' && a.type !== 'credit') return; // Filtra só cartões
                     s.innerHTML += `<option value="${a.id}">${a.name}</option>`;
                 });
-                if(currentVal) s.value = currentVal;
-            });
-        }
-
-        // Renderiza Lançamentos Gerais na Tabela Principal
-        function renderTransactions() {
-            const tbody = document.getElementById('tx-body');
-            tbody.innerHTML = '';
-            
-            const year = state.currentDate.getFullYear();
-            const month = state.currentDate.getMonth();
-
-            const filtered = state.transactions.filter(t => {
-                const [y, m, d] = t.date.split('-').map(Number);
-                return y === year && (m - 1) === month;
-            });
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-secondary);">Nenhuma transação encontrada para este mês.</td></tr>`;
-                return;
-            }
-
-            filtered.forEach(t => {
-                const acc = state.accounts.find(a => a.id === t.accountId);
-                const accName = acc ? acc.name : 'Geral';
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${t.date}</td>
-                        <td>${t.desc} <span style="font-size:11px; color:var(--text-secondary);">(${accName})</span></td>
-                        <td class="${t.type === 'expense' ? 'val-expense' : 'val-income'}">R$ ${t.amount.toFixed(2).replace('.', ',')}</td>
-                        <td><button class="btn-del" onclick="deleteTx('${t.id}')">🗑️</button></td>
-                    </tr>`;
             });
         }
 
@@ -234,12 +197,6 @@
             const totalEl = document.getElementById('invoice-total');
             tbody.innerHTML = '';
             
-            if(!accId) {
-                totalEl.innerText = 'R$ 0,00';
-                tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-secondary);">Nenhum cartão cadastrado ou selecionado.</td></tr>`;
-                return;
-            }
-
             const year = state.currentDate.getFullYear();
             const month = state.currentDate.getMonth();
             let total = 0;
@@ -249,21 +206,16 @@
                 return effDate.getFullYear() === year && effDate.getMonth() === month && t.accountId === accId;
             });
 
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-secondary);">Nenhuma compra nesta fatura.</td></tr>`;
-            } else {
-                filtered.forEach(t => {
-                    total += t.amount;
-                    tbody.innerHTML += `<tr><td>${t.date}</td><td>${t.desc}</td><td class="val-expense">R$ ${t.amount.toFixed(2).replace('.', ',')}</td></tr>`;
-                });
-            }
+            filtered.forEach(t => {
+                total += t.amount;
+                tbody.innerHTML += `<tr><td>${t.date}</td><td>${t.desc}</td><td class="val-expense">R$ ${t.amount.toFixed(2)}</td></tr>`;
+            });
 
             totalEl.innerText = `R$ ${total.toFixed(2).replace('.', ',')}`;
         }
 
         function updateAllViews() {
             document.getElementById('display-month').innerText = state.currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-            renderTransactions();
             renderInvoices();
         }
 
@@ -273,62 +225,23 @@
         }
 
         function addAccount() {
-            const name = document.getElementById('acc-name').value;
-            if(!name) return alert('Digite o nome da conta/cartão.');
-            const newAcc = { 
-                id: 'acc_'+Date.now(), 
-                name: name, 
-                type: document.getElementById('acc-type').value, 
-                closingDay: document.getElementById('acc-closing').value 
-            };
+            const newAcc = { id: 'acc_'+Date.now(), name: document.getElementById('acc-name').value, type: document.getElementById('acc-type').value, closingDay: document.getElementById('acc-closing').value };
             state.accounts.push(newAcc);
             db.collection('users').doc(auth.currentUser.uid).set(state);
             initSelects();
-            document.getElementById('acc-name').value = '';
-            document.getElementById('acc-closing').value = '';
-        }
-
-        function deleteTx(id) {
-            state.transactions = state.transactions.filter(t => t.id !== id);
-            db.collection('users').doc(auth.currentUser.uid).set(state);
         }
 
         document.getElementById('tx-form').addEventListener('submit', (e) => {
             e.preventDefault();
-            const desc = document.getElementById('tx-desc').value;
-            const amount = parseFloat(document.getElementById('tx-amount').value);
-            const accountId = document.getElementById('tx-account').value;
-            const type = document.getElementById('tx-type').value;
-            const isInstallment = document.getElementById('tx-is-installment').checked;
-            const count = parseInt(document.getElementById('tx-installments').value) || 2;
-
-            if(!accountId) return alert('Cadastre e selecione uma conta/cartão primeiro.');
-
-            if(isInstallment) {
-                const valPerInstallment = amount / count;
-                for(let i = 0; i < count; i++) {
-                    let d = new Date();
-                    d.setMonth(d.getMonth() + i);
-                    state.transactions.push({
-                        id: 'tx_'+Date.now()+'_'+i,
-                        desc: `${desc} (${i+1}/${count})`,
-                        amount: valPerInstallment,
-                        date: d.toISOString().split('T')[0],
-                        accountId: accountId,
-                        type: 'expense'
-                    });
-                }
-            } else {
-                state.transactions.push({
-                    id: 'tx_'+Date.now(),
-                    desc: desc,
-                    amount: amount,
-                    date: new Date().toISOString().split('T')[0],
-                    accountId: accountId,
-                    type: type
-                });
-            }
-
+            const newTx = {
+                id: 'tx_'+Date.now(),
+                desc: document.getElementById('tx-desc').value,
+                amount: parseFloat(document.getElementById('tx-amount').value),
+                date: new Date().toISOString().split('T')[0],
+                accountId: document.getElementById('tx-account').value,
+                type: document.getElementById('tx-type').value
+            };
+            state.transactions.push(newTx);
             db.collection('users').doc(auth.currentUser.uid).set(state);
             document.getElementById('tx-form').reset();
         });
