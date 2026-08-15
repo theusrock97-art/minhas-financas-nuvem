@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minhas Finanças - PRO MAX (Nuvem)</title>
 
+    <!-- GOOGLE FONTS: SORA -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <!-- FIREBASE SDKs COMPAT (NUVEM EM TEMPO REAL) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -46,7 +51,7 @@
         * { box-sizing: border-box; transition: background-color 0.2s, color 0.2s; }
 
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-family: 'Sora', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-primary);
             margin: 0;
@@ -101,8 +106,51 @@
             display: flex;
             align-items: center;
             gap: 6px;
+            font-family: 'Sora', sans-serif;
         }
         .btn-icon:hover { background: rgba(255, 255, 255, 0.2); }
+
+        /* ALERTA TOPO (CONTAS VENCIDAS) */
+        .alert-banner {
+            background: var(--red-bg);
+            border: 1px solid var(--red);
+            color: var(--red);
+            padding: 10px 16px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        /* BARRA DE AÇÕES RÁPIDAS */
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin: 20px 0 10px 0;
+        }
+
+        .btn-quick {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: var(--shadow);
+            font-family: 'Sora', sans-serif;
+        }
+        .btn-quick:hover { border-color: var(--primary); color: var(--primary); }
 
         /* NAV MESES */
         .month-selector {
@@ -123,6 +171,7 @@
             cursor: pointer;
             font-size: 16px;
             font-weight: bold;
+            font-family: 'Sora', sans-serif;
         }
         .month-btn:hover { background: var(--primary); }
 
@@ -194,12 +243,13 @@
             border: none;
             color: var(--text-secondary);
             padding: 10px 18px;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             border-bottom: 3px solid transparent;
             margin-bottom: -2px;
             white-space: nowrap;
+            font-family: 'Sora', sans-serif;
         }
 
         .tab-btn.active {
@@ -269,6 +319,7 @@
             border-radius: 8px;
             font-size: 14px;
             outline: none;
+            font-family: 'Sora', sans-serif;
         }
         input:focus, select:focus { border-color: var(--primary); }
 
@@ -283,6 +334,7 @@
             font-size: 15px;
             width: 100%;
             margin-top: 10px;
+            font-family: 'Sora', sans-serif;
         }
         .btn-submit:hover { opacity: 0.9; }
 
@@ -297,6 +349,7 @@
             font-size: 15px;
             width: 100%;
             margin-top: 10px;
+            font-family: 'Sora', sans-serif;
         }
         .btn-secondary-action:hover { opacity: 0.9; }
 
@@ -380,7 +433,7 @@
             text-align: center;
         }
 
-        canvas { max-width: 100%; height: auto; }
+        canvas { max-width: 100%; height: auto; display: block; margin: 0 auto; }
 
         /* BARS & ACCOUNTS */
         .budget-item { margin-bottom: 16px; }
@@ -391,7 +444,7 @@
         .accounts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
         .account-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; display: flex; justify-content: space-between; align-items: flex-start; }
 
-        .filter-bar { display: flex; gap: 12px; margin-bottom: 15px; flex-wrap: wrap; }
+        .filter-bar { display: flex; gap: 12px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; }
         .filter-bar input, .filter-bar select { padding: 8px 12px; font-size: 13px; }
 
         /* MODAL DE LOGIN */
@@ -431,10 +484,11 @@
             justify-content: center;
             gap: 10px;
             margin-top: 20px;
+            font-family: 'Sora', sans-serif;
         }
 
         @media print {
-            header, .tabs, .form-card, .filter-bar, .header-actions, .month-selector, .user-bar { display: none !important; }
+            header, .tabs, .form-card, .filter-bar, .header-actions, .month-selector, .user-bar, .quick-actions, .alert-banner { display: none !important; }
             body { background: #fff; color: #000; }
             .card, .table-container, .chart-card { border: 1px solid #ccc; box-shadow: none; }
             .dashboard-cards { margin-top: 0; }
@@ -509,22 +563,46 @@
                 </div>
                 <div class="card-value val-balance" id="dash-balance">R$ 0,00</div>
             </div>
-            <div class="card">
+            <div class="card" style="cursor: pointer;" onclick="togglePatrimonyBreakdown()" title="Clique para ver detalhes do patrimônio">
                 <div class="card-header">
                     <span>Patrimônio Geral</span>
                     <span>🏦</span>
                 </div>
                 <div class="card-value" id="dash-total-patrimony" style="color: var(--primary);">R$ 0,00</div>
+                <div id="patrimony-breakdown-mini" style="font-size: 11px; color: var(--text-secondary); margin-top: 6px; line-height: 1.3;"></div>
             </div>
         </div>
 
-        <!-- TABS DE NAVEGAÇÃO -->
+        <!-- BARRA DE AÇÕES RÁPIDAS -->
+        <div class="quick-actions">
+            <button class="btn-quick" onclick="quickAdd('expense')">🔴 Nova Despesa</button>
+            <button class="btn-quick" onclick="quickAdd('income')">🟢 Nova Receita</button>
+            <button class="btn-quick" onclick="quickAdd('transfer')">🔄 Transferir</button>
+            <button class="btn-quick" onclick="switchTabById('tab-budgets')">🐷 Cofrinho / Metas</button>
+            <button class="btn-quick" onclick="switchTabById('tab-calendar')">📅 Calendário</button>
+            <button class="btn-quick" onclick="switchTabById('tab-loans')">🤝 Dívidas & Empréstimos</button>
+            <button class="btn-quick" onclick="switchTabById('tab-simulator')">🧮 Simulador Juros</button>
+        </div>
+
+        <!-- ALERTA DE CONTAS VENCIDAS -->
+        <div id="alert-banner-box" class="alert-banner" style="display: none;">
+            <span id="alert-banner-text">⚠️ Você possui contas pendentes ou vencidas neste mês.</span>
+            <button class="btn-icon" style="background: var(--red); color: #fff; border:none; padding:4px 10px; font-size:12px;" onclick="filterPending()">Ver Vencidas</button>
+        </div>
+
+        <!-- TABS DE NAVEGAÇÃO COMPLETA -->
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab(event, 'tab-overview')">📌 Painel & Lançamentos</button>
-            <button class="tab-btn" onclick="switchTab(event, 'tab-charts')">📊 Gráficos & Relatórios</button>
-            <button class="tab-btn" onclick="switchTab(event, 'tab-accounts')">💳 Contas & Cartões</button>
-            <button class="tab-btn" onclick="switchTab(event, 'tab-budgets')">🎯 Metas & Categorias</button>
-            <button class="tab-btn" onclick="switchTab(event, 'tab-recurring')">🔄 Despesas Fixas</button>
+            <button class="tab-btn active" id="btn-tab-overview" onclick="switchTab(event, 'tab-overview')">📌 Extrato & Painel</button>
+            <button class="tab-btn" id="btn-tab-calendar" onclick="switchTab(event, 'tab-calendar')">📅 Calendário</button>
+            <button class="tab-btn" id="btn-tab-budgets" onclick="switchTab(event, 'tab-budgets')">🐷 Cofrinho & Metas</button>
+            <button class="tab-btn" id="btn-tab-loans" onclick="switchTab(event, 'tab-loans')">🤝 Empréstimos</button>
+            <button class="tab-btn" id="btn-tab-simulator" onclick="switchTab(event, 'tab-simulator')">🧮 Simulador</button>
+            <button class="tab-btn" id="btn-tab-charts" onclick="switchTab(event, 'tab-charts')">📊 Gráficos</button>
+            <button class="tab-btn" id="btn-tab-projection" onclick="switchTab(event, 'tab-projection')">🔮 Projeção</button>
+            <button class="tab-btn" id="btn-tab-accounts" onclick="switchTab(event, 'tab-accounts')">💳 Contas</button>
+            <button class="tab-btn" id="btn-tab-invoices" onclick="switchTab(event, 'tab-invoices')">📑 Faturas</button>
+            <button class="tab-btn" id="btn-tab-goals" onclick="switchTab(event, 'tab-goals')">🎯 Metas Gastos</button>
+            <button class="tab-btn" id="btn-tab-recurring" onclick="switchTab(event, 'tab-recurring')">🔄 Fixas</button>
         </div>
 
         <!-- TAB 1: PAINEL & LANÇAMENTOS -->
@@ -546,11 +624,11 @@
                                 <input type="text" id="tx-desc" placeholder="Ex: Supermercado, Salário..." required autocomplete="off">
                             </div>
                             <div class="form-group">
-                                <label>Valor (R$)</label>
+                                <label>Valor Total (R$)</label>
                                 <input type="number" id="tx-amount" step="0.01" placeholder="0.00" required>
                             </div>
                             <div class="form-group">
-                                <label>Data</label>
+                                <label>Data da Compra</label>
                                 <input type="date" id="tx-date" required>
                             </div>
                             <div class="form-group">
@@ -580,14 +658,32 @@
                                     <option value="pending">Pendente / Agendado</option>
                                 </select>
                             </div>
+
+                            <!-- OPÇÃO DE PARCELAMENTO -->
+                            <div class="form-group full" id="group-installment-checkbox" style="display: flex;">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; text-transform: none; font-weight: 500; color: var(--text-primary);">
+                                    <input type="checkbox" id="tx-is-installment" onchange="toggleInstallmentFields()" style="width: auto; height: auto;"> 
+                                    <span>💳 É uma compra parcelada?</span>
+                                </label>
+                            </div>
+                            <div class="form-group" id="group-installments-count" style="display: none;">
+                                <label>Número de Parcelas</label>
+                                <input type="number" id="tx-installments" min="2" max="48" value="2">
+                            </div>
                         </div>
                         <button type="submit" id="btn-submit-tx" class="btn-submit">Salvar na Nuvem</button>
                         <button type="button" id="btn-cancel-edit" class="btn-secondary-action" style="display: none; background: #64748b;" onclick="cancelEdit()">Cancelar Edição</button>
                     </form>
                 </div>
 
-                <!-- RESUMO RÁPIDO DE METAS -->
+                <!-- TOP GASTOS DA CATEGORIA & RESUMO METAS -->
                 <div>
+                    <div class="form-card">
+                        <h3 class="form-title">📊 Top Gastos por Categoria</h3>
+                        <div id="top-categories-list">
+                            <p style="color: var(--text-secondary); font-size: 13px;">Nenhuma despesa registrada este mês.</p>
+                        </div>
+                    </div>
                     <div class="form-card">
                         <h3 class="form-title">🎯 Resumo de Metas do Mês</h3>
                         <div id="quick-budgets-list">
@@ -609,6 +705,20 @@
                     <option value="expense">Apenas Saídas</option>
                     <option value="transfer">Apenas Transferências</option>
                 </select>
+                <label style="display:flex; align-items:center; gap:6px; font-size: 12px; cursor:pointer; color: var(--text-secondary); font-weight: 600;">
+                    <input type="checkbox" id="use-custom-date" onchange="toggleCustomDate()" style="width:auto; height:auto;"> Período Personalizado
+                </label>
+            </div>
+
+            <div id="custom-date-container" class="filter-bar" style="display: none; background: var(--card-bg); padding: 12px; border: 1px solid var(--border); border-radius: var(--radius);">
+                <div class="form-group" style="flex:1;">
+                    <label>Data Inicial</label>
+                    <input type="date" id="filter-start-date" onchange="renderTransactions()">
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>Data Final</label>
+                    <input type="date" id="filter-end-date" onchange="renderTransactions()">
+                </div>
             </div>
 
             <div class="table-container">
@@ -631,7 +741,81 @@
             </div>
         </div>
 
-        <!-- TAB 2: GRÁFICOS -->
+        <!-- TAB CALENDÁRIO -->
+        <div id="tab-calendar" class="tab-content">
+            <div class="form-card">
+                <h3 class="form-title">📅 Visão em Calendário</h3>
+                <p style="color: var(--text-secondary); font-size: 14px;">Acompanhe o vencimento de contas e receitas ao longo dos dias do mês.</p>
+                <div id="calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-top: 15px; text-align: center;">
+                    <!-- Preenchido via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB COFRINHO & METAS -->
+        <div id="tab-budgets" class="tab-content">
+            <div class="form-card">
+                <h3 class="form-title">🐷 Cofrinho & Objetivos Financeiros</h3>
+                <p style="color: var(--text-secondary); font-size: 14px;">Guarde dinheiro para objetivos de curto e longo prazo (ex: Viagem, Carro Novo).</p>
+                <div id="piggy-banks-list" style="margin-top: 15px;">
+                    <p style="color: var(--text-secondary); font-size: 13px;">Nenhum cofrinho criado ainda.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB EMPRÉSTIMOS -->
+        <div id="tab-loans" class="tab-content">
+            <div class="form-card">
+                <h3 class="form-title">🤝 Dívidas & Empréstimos</h3>
+                <p style="color: var(--text-secondary); font-size: 14px;">Gerencie valores que você emprestou para terceiros ou dívidas a pagar.</p>
+                <div class="table-container" style="margin-top: 15px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Pessoa / Entidade</th>
+                                <th>Tipo</th>
+                                <th>Valor Total</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="4" style="text-align: center; color: var(--text-secondary); padding: 20px;">Nenhum empréstimo cadastrado.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB SIMULADOR JUROS -->
+        <div id="tab-simulator" class="tab-content">
+            <div class="form-card">
+                <h3 class="form-title">🧮 Simulador de Juros Compostos</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Aporte Inicial (R$)</label>
+                        <input type="number" id="sim-initial" value="1000">
+                    </div>
+                    <div class="form-group">
+                        <label>Aporte Mensal (R$)</label>
+                        <input type="number" id="sim-monthly" value="200">
+                    </div>
+                    <div class="form-group">
+                        <label>Taxa de Juros Anual (%)</label>
+                        <input type="number" id="sim-rate" value="10">
+                    </div>
+                    <div class="form-group">
+                        <label>Período (Anos)</label>
+                        <input type="number" id="sim-years" value="5">
+                    </div>
+                </div>
+                <button class="btn-submit" onclick="runSimulation()" style="margin-top:15px;">Calcular Projeção</button>
+                <div id="sim-result" style="margin-top: 20px; font-size: 18px; font-weight: bold; color: var(--green);"></div>
+            </div>
+        </div>
+
+        <!-- TAB GRÁFICOS -->
         <div id="tab-charts" class="tab-content">
             <div class="charts-grid">
                 <div class="chart-card">
@@ -645,7 +829,30 @@
             </div>
         </div>
 
-        <!-- TAB 3: CONTAS -->
+        <!-- TAB PROJEÇÃO FUTURA -->
+        <div id="tab-projection" class="tab-content">
+            <div class="form-card">
+                <h3 class="form-title">🔮 Projeção de Fluxo de Caixa (Próximos 6 Meses)</h3>
+                <p style="color: var(--text-secondary); font-size: 14px;">Estimativa automática do seu saldo considerando o patrimônio atual, despesas fixas recorrentes e compras parceladas futuras.</p>
+                <div class="table-container" style="margin-top: 20px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Mês</th>
+                                <th>Entradas Previstas</th>
+                                <th>Saídas Previstas (Fixas + Parcelas)</th>
+                                <th>Saldo Projetado Acumulado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="projection-tbody">
+                            <!-- Preenchido via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB CONTAS -->
         <div id="tab-accounts" class="tab-content">
             <div class="form-card">
                 <h3 class="form-title">💳 Minhas Contas & Cartões</h3>
@@ -655,9 +862,11 @@
                         <input type="text" id="acc-name-input" placeholder="Ex: Nubank, Carteira...">
                     </div>
                     <div class="form-group">
-                        <label>Tipo</label>
+                        <label>Tipo / Categoria Patrimonial</label>
                         <select id="acc-type-input" onchange="toggleClosingDayField()">
                             <option value="normal">Conta Corrente / Dinheiro</option>
+                            <option value="emergency">Reserva de Emergência</option>
+                            <option value="investment">Investimentos</option>
                             <option value="credit">Cartão de Crédito</option>
                         </select>
                     </div>
@@ -677,8 +886,42 @@
             </div>
         </div>
 
-        <!-- TAB 4: METAS & CATEGORIAS -->
-        <div id="tab-budgets" class="tab-content">
+        <!-- TAB FATURAS -->
+        <div id="tab-invoices" class="tab-content">
+            <div class="form-card">
+                <h3 class="form-title">💳 Fechamento de Fatura</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Selecione o Cartão</label>
+                        <select id="invoice-account-select" onchange="renderInvoices()"></select>
+                    </div>
+                </div>
+                <div class="card" style="margin-top: 20px; text-align: center;">
+                    <div class="card-header">
+                        <span>Total Faturado no Mês</span>
+                        <span>💳</span>
+                    </div>
+                    <div class="card-value val-expense" id="invoice-total">R$ 0,00</div>
+                </div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data da Compra</th>
+                            <th>Descrição</th>
+                            <th>Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoice-body">
+                        <!-- Faturas preenchidas via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB METAS DE GASTOS & CATEGORIAS -->
+        <div id="tab-goals" class="tab-content">
             <!-- GERENCIAR CATEGORIAS -->
             <div class="form-card">
                 <h3 class="form-title">🏷️ Criar Nova Categoria</h3>
@@ -714,7 +957,7 @@
             </div>
         </div>
 
-        <!-- TAB 5: DESPESAS FIXAS / RECORRENTES -->
+        <!-- TAB DESPESAS FIXAS / RECORRENTES -->
         <div id="tab-recurring" class="tab-content">
             <div class="form-card">
                 <h3 class="form-title">🔄 Despesas Fixas / Recorrentes</h3>
@@ -870,6 +1113,7 @@
         function toggleTheme() {
             state.theme = state.theme === 'light' ? 'dark' : 'light';
             document.body.setAttribute('data-theme', state.theme);
+            updateUI();
         }
 
         // NAVEGAÇÃO
@@ -877,12 +1121,32 @@
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             
-            if (evt && evt.currentTarget) evt.currentTarget.classList.add('active');
+            if (evt && evt.currentTarget) {
+                evt.currentTarget.classList.add('active');
+            } else {
+                const activeBtn = document.getElementById(`btn-${tabId}`);
+                if (activeBtn) activeBtn.classList.add('active');
+            }
+
             const targetContent = document.getElementById(tabId);
             if (targetContent) targetContent.classList.add('active');
 
             if (tabId === 'tab-charts') drawCharts();
             if (tabId === 'tab-recurring') renderRecurringTable();
+            if (tabId === 'tab-invoices') renderInvoices();
+            if (tabId === 'tab-projection') renderProjectionTable();
+            if (tabId === 'tab-calendar') renderCalendar();
+        }
+
+        function switchTabById(tabId) {
+            switchTab(null, tabId);
+        }
+
+        function quickAdd(type) {
+            switchTabById('tab-overview');
+            document.getElementById('tx-type').value = type;
+            toggleTransferFields();
+            document.getElementById('tx-desc').focus();
         }
 
         function changeMonth(delta) {
@@ -907,21 +1171,45 @@
             group.style.display = type === 'credit' ? 'flex' : 'none';
         }
 
+        function toggleCustomDate() {
+            const isChecked = document.getElementById('use-custom-date').checked;
+            document.getElementById('custom-date-container').style.display = isChecked ? 'flex' : 'none';
+            renderTransactions();
+        }
+
         function toggleTransferFields() {
             const type = document.getElementById('tx-type').value;
             const groupDest = document.getElementById('group-dest-account');
             const groupCat = document.getElementById('group-category');
             const labelAcc = document.getElementById('label-account');
+            const groupInstCb = document.getElementById('group-installment-checkbox');
+            const groupInstCount = document.getElementById('group-installments-count');
 
             if (type === 'transfer') {
                 groupDest.style.display = 'flex';
                 groupCat.style.display = 'none';
                 labelAcc.innerText = 'Conta de Origem';
+                groupInstCb.style.display = 'none';
+                groupInstCount.style.display = 'none';
+            } else if (type === 'expense') {
+                groupDest.style.display = 'none';
+                groupCat.style.display = 'flex';
+                labelAcc.innerText = 'Conta / Cartão';
+                groupInstCb.style.display = 'flex';
+                toggleInstallmentFields();
             } else {
                 groupDest.style.display = 'none';
                 groupCat.style.display = 'flex';
                 labelAcc.innerText = 'Conta / Cartão';
+                groupInstCb.style.display = 'none';
+                groupInstCount.style.display = 'none';
             }
+        }
+
+        function toggleInstallmentFields() {
+            const isInst = document.getElementById('tx-is-installment').checked;
+            const groupInstCount = document.getElementById('group-installments-count');
+            groupInstCount.style.display = isInst ? 'flex' : 'none';
         }
 
         function initSelects() {
@@ -930,24 +1218,32 @@
                 const el = document.getElementById(id);
                 if (!el) return;
                 const isFilter = id === 'filter-cat';
+                const currentVal = el.value;
                 el.innerHTML = isFilter ? '<option value="all">Todas as Categorias</option>' : '';
                 state.categories.forEach(c => {
                     el.innerHTML += `<option value="${c}">${c}</option>`;
                 });
+                if (currentVal) el.value = currentVal;
             });
 
-            const accountSelects = ['tx-account', 'tx-dest-account', 'rec-account'];
+            const accountSelects = ['tx-account', 'tx-dest-account', 'rec-account', 'invoice-account-select'];
             accountSelects.forEach(id => {
                 const el = document.getElementById(id);
                 if (!el) return;
+                const currentVal = el.value;
                 el.innerHTML = '';
                 state.accounts.forEach(a => {
+                    if (id === 'invoice-account-select' && a.type !== 'credit') return;
                     el.innerHTML += `<option value="${a.id}">${a.name}</option>`;
                 });
+                if (currentVal) el.value = currentVal;
             });
 
             if (!document.getElementById('tx-date').value) {
-                document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
+                const todayIso = new Date().toISOString().split('T')[0];
+                document.getElementById('tx-date').value = todayIso;
+                document.getElementById('filter-start-date').value = todayIso;
+                document.getElementById('filter-end-date').value = todayIso;
             }
         }
 
@@ -1005,20 +1301,102 @@
             document.getElementById('dash-balance').innerText = `R$ ${balanceMonth.toFixed(2).replace('.', ',')}`;
 
             let totalPatrimony = 0;
-            state.accounts.forEach(a => { totalPatrimony += Number(a.initialBalance || 0); });
-            state.transactions.forEach(t => {
-                if (t.status === 'paid') {
-                    if (t.type === 'income') totalPatrimony += t.amount;
-                    else if (t.type === 'expense') totalPatrimony -= t.amount;
-                    // Transferências não alteram o patrimônio geral, apenas o saldo entre contas
-                }
-            });
-            document.getElementById('dash-total-patrimony').innerText = `R$ ${totalPatrimony.toFixed(2).replace('.', ',')}`;
+            let normalTotal = 0;
+            let emergencyTotal = 0;
+            let investmentTotal = 0;
 
+            state.accounts.forEach(a => {
+                let bal = Number(a.initialBalance || 0);
+                state.transactions.filter(t => t.status === 'paid').forEach(t => {
+                    if (t.accountId === a.id) {
+                        if (t.type === 'income') bal += t.amount;
+                        else if (t.type === 'expense') bal -= t.amount;
+                        else if (t.type === 'transfer') bal -= t.amount;
+                    }
+                    if (t.type === 'transfer' && t.destAccountId === a.id) {
+                        bal += t.amount;
+                    }
+                });
+                totalPatrimony += bal;
+                if (a.type === 'emergency') emergencyTotal += bal;
+                else if (a.type === 'investment') investmentTotal += bal;
+                else if (a.type === 'normal') normalTotal += bal;
+            });
+
+            document.getElementById('dash-total-patrimony').innerText = `R$ ${totalPatrimony.toFixed(2).replace('.', ',')}`;
+            document.getElementById('patrimony-breakdown-mini').innerHTML = `Corrente: R$ ${normalTotal.toFixed(2)} | Reserva: R$ ${emergencyTotal.toFixed(2)} | Inv: R$ ${investmentTotal.toFixed(2)}`;
+
+            checkPendingAlert(monthTxs);
+            renderTopCategories(monthTxs);
             renderTransactions();
             renderAccounts();
             renderBudgets(monthTxs);
+            renderInvoices();
             generateInsights(incomeMonth, expenseMonth, monthTxs);
+            
+            if (document.getElementById('tab-charts').classList.contains('active')) {
+                drawCharts();
+            }
+        }
+
+        function checkPendingAlert(monthTxs) {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const overdue = monthTxs.filter(t => t.status === 'pending' && t.date < todayStr);
+            const banner = document.getElementById('alert-banner-box');
+            
+            if (overdue.length > 0) {
+                banner.style.display = 'flex';
+                document.getElementById('alert-banner-text').innerText = `⚠️ Você tem ${overdue.length} conta(s) pendente(s) vencida(s) neste mês!`;
+            } else {
+                banner.style.display = 'none';
+            }
+        }
+
+        function filterPending() {
+            switchTabById('tab-overview');
+            document.getElementById('filter-type').value = 'expense';
+            renderTransactions();
+        }
+
+        function renderTopCategories(monthTxs) {
+            const listEl = document.getElementById('top-categories-list');
+            if(!listEl) return;
+
+            const totals = {};
+            let totalSpent = 0;
+
+            monthTxs.filter(t => t.type === 'expense').forEach(t => {
+                totals[t.category] = (totals[t.category] || 0) + t.amount;
+                totalSpent += t.amount;
+            });
+
+            const sorted = Object.keys(totals).sort((a,b) => totals[b] - totals[a]);
+
+            if (sorted.length === 0) {
+                listEl.innerHTML = `<p style="color: var(--text-secondary); font-size: 13px;">Nenhuma despesa registrada este mês.</p>`;
+                return;
+            }
+
+            listEl.innerHTML = '';
+            sorted.slice(0, 5).forEach(cat => {
+                const amount = totals[cat];
+                const pct = Math.round((amount / totalSpent) * 100);
+                listEl.innerHTML += `
+                    <div class="budget-item">
+                        <div class="budget-info">
+                            <span>${cat}</span>
+                            <span>R$ ${amount.toFixed(2).replace('.', ',')} (${pct}%)</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" style="width: ${pct}%; background: var(--primary);"></div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function togglePatrimonyBreakdown() {
+            switchTab(null, 'tab-accounts');
         }
 
         // SUBMETER TRANSAÇÃO (NOVA OU EDITADA)
@@ -1033,13 +1411,15 @@
             const destAccountId = type === 'transfer' ? document.getElementById('tx-dest-account').value : '';
             const status = document.getElementById('tx-status').value;
 
+            const isInstallment = document.getElementById('tx-is-installment').checked && type === 'expense';
+            const installmentsCount = parseInt(document.getElementById('tx-installments').value) || 1;
+
             if (!desc || isNaN(amount) || !date) return;
             if (type === 'transfer' && accountId === destAccountId) {
                 return alert('A conta de origem e destino não podem ser iguais!');
             }
 
             if (state.editingTxId) {
-                // Editando transação existente
                 const idx = state.transactions.findIndex(t => t.id === state.editingTxId);
                 if (idx !== -1) {
                     state.transactions[idx] = {
@@ -1051,8 +1431,35 @@
                 document.getElementById('form-title-text').innerText = '➕ Nova Transação';
                 document.getElementById('btn-submit-tx').innerText = 'Salvar na Nuvem';
                 document.getElementById('btn-cancel-edit').style.display = 'none';
+            } else if (isInstallment && installmentsCount > 1) {
+                const totalAmount = amount;
+                const installmentAmount = totalAmount / installmentsCount;
+                const [y, m, d] = date.split('-').map(Number);
+
+                for (let i = 0; i < installmentsCount; i++) {
+                    let targetDate = new Date(y, m - 1 + i, d);
+                    const tY = targetDate.getFullYear();
+                    const tM = String(targetDate.getMonth() + 1).padStart(2, '0');
+                    const tD = String(targetDate.getDate()).padStart(2, '0');
+                    const dateStr = `${tY}-${tM}-${tD}`;
+
+                    const id = 'tx_' + Date.now() + '_' + i;
+                    const instDesc = `${desc} (${i + 1}/${installmentsCount})`;
+                    const instStatus = (i === 0) ? status : 'pending';
+
+                    state.transactions.push({
+                        id,
+                        desc: instDesc,
+                        amount: installmentAmount,
+                        date: dateStr,
+                        type,
+                        category,
+                        accountId,
+                        destAccountId,
+                        status: instStatus
+                    });
+                }
             } else {
-                // Criando nova transação
                 const id = 'tx_' + Date.now();
                 state.transactions.push({ id, desc, amount, date, type, category, accountId, destAccountId, status });
             }
@@ -1061,6 +1468,7 @@
 
             document.getElementById('tx-desc').value = '';
             document.getElementById('tx-amount').value = '';
+            document.getElementById('tx-is-installment').checked = false;
             document.getElementById('tx-type').value = 'expense';
             toggleTransferFields();
         });
@@ -1104,25 +1512,37 @@
 
         function renderTransactions() {
             const tbody = document.getElementById('tx-table-body');
+            if(!tbody) return;
             tbody.innerHTML = '';
 
-            const year = state.currentDate.getFullYear();
-            const month = state.currentDate.getMonth();
             const search = document.getElementById('filter-search').value.toLowerCase();
             const catFilter = document.getElementById('filter-cat').value;
             const typeFilter = document.getElementById('filter-type').value;
+            const useCustomDate = document.getElementById('use-custom-date').checked;
+
+            const year = state.currentDate.getFullYear();
+            const month = state.currentDate.getMonth();
+            const startDate = document.getElementById('filter-start-date').value;
+            const endDate = document.getElementById('filter-end-date').value;
+            const todayStr = new Date().toISOString().split('T')[0];
 
             const filtered = state.transactions.filter(t => {
-                const effDate = getEffectiveDate(t);
-                const matchMonth = effDate.getFullYear() === year && effDate.getMonth() === month;
+                let matchRange = false;
+                if (useCustomDate) {
+                    matchRange = (!startDate || t.date >= startDate) && (!endDate || t.date <= endDate);
+                } else {
+                    const effDate = getEffectiveDate(t);
+                    matchRange = effDate.getFullYear() === year && effDate.getMonth() === month;
+                }
+
                 const matchSearch = t.desc.toLowerCase().includes(search);
                 const matchCat = catFilter === 'all' || t.category === catFilter;
                 const matchType = typeFilter === 'all' || t.type === typeFilter;
-                return matchMonth && matchSearch && matchCat && matchType;
+                return matchRange && matchSearch && matchCat && matchType;
             });
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: var(--text-secondary); padding: 25px;">Nenhuma transação encontrada para este mês/fatura.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: var(--text-secondary); padding: 25px;">Nenhuma transação encontrada para este período.</td></tr>`;
                 return;
             }
 
@@ -1147,17 +1567,24 @@
                     amountDisplay = `R$ ${t.amount.toFixed(2).replace('.', ',')} (${acc.name} ➡️ ${destAcc.name})`;
                 }
 
+                let statusBadge = '';
+                if (t.status === 'paid') {
+                    statusBadge = `<span class="badge badge-status-paid">Concluído</span>`;
+                } else {
+                    if (t.date < todayStr) {
+                        statusBadge = `<span class="badge" style="background: var(--red-bg); color: var(--red);" title="Esta conta está vencida!">⚠️ Vencido</span>`;
+                    } else {
+                        statusBadge = `<span class="badge badge-status-pending">Pendente</span>`;
+                    }
+                }
+
                 tbody.innerHTML += `
                     <tr>
                         <td>${formatDateBR(t.date)}</td>
                         <td><strong>${t.desc}</strong></td>
                         <td>${catBadge}</td>
                         <td><span class="badge badge-acc">${acc.name}</span></td>
-                        <td>
-                            <span class="badge ${t.status === 'paid' ? 'badge-status-paid' : 'badge-status-pending'}">
-                                ${t.status === 'paid' ? 'Concluído' : 'Pendente'}
-                            </span>
-                        </td>
+                        <td>${statusBadge}</td>
                         <td class="${colorClass}" style="font-weight: bold;">${amountDisplay}</td>
                         <td>
                             <div class="action-btns">
@@ -1168,6 +1595,49 @@
                     </tr>
                 `;
             });
+        }
+
+        // RENDERIZAR FATURAS DO CARTÃO SELECIONADO
+        function renderInvoices() {
+            const selectAcc = document.getElementById('invoice-account-select');
+            const tbody = document.getElementById('invoice-body');
+            const totalEl = document.getElementById('invoice-total');
+            if (!tbody || !totalEl || !selectAcc) return;
+
+            tbody.innerHTML = '';
+            const accId = selectAcc.value;
+
+            if (!accId) {
+                totalEl.innerText = 'R$ 0,00';
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color: var(--text-secondary); padding: 25px;">Nenhum cartão de crédito cadastrado ou selecionado.</td></tr>`;
+                return;
+            }
+
+            const year = state.currentDate.getFullYear();
+            const month = state.currentDate.getMonth();
+            let total = 0;
+
+            const filtered = state.transactions.filter(t => {
+                const effDate = getEffectiveDate(t);
+                return effDate.getFullYear() === year && effDate.getMonth() === month && t.accountId === accId;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color: var(--text-secondary); padding: 25px;">Nenhuma compra nesta fatura para este mês.</td></tr>`;
+            } else {
+                filtered.forEach(t => {
+                    total += t.amount;
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${formatDateBR(t.date)}</td>
+                            <td><strong>${t.desc}</strong></td>
+                            <td class="val-expense" style="font-weight: bold;">R$ ${t.amount.toFixed(2).replace('.', ',')}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            totalEl.innerText = `R$ ${total.toFixed(2).replace('.', ',')}`;
         }
 
         function deleteTx(id) {
@@ -1246,7 +1716,6 @@
                 const monthStr = String(month + 1).padStart(2, '0');
                 const dateStr = `${year}-${monthStr}-${dayStr}`;
 
-                // Verifica se já existe transação idêntica neste mês para evitar duplicata
                 const exists = state.transactions.some(t => t.desc === r.desc && t.date === dateStr && t.amount === r.amount);
                 if (!exists) {
                     const id = 'tx_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
@@ -1267,6 +1736,63 @@
             saveUserData();
             updateUI();
             alert(`${addedCount} lançamentos fixos gerados para este mês com status Pendente!`);
+        }
+
+        // PROJEÇÃO DE FLUXO DE CAIXA FUTURO (PRÓXIMOS 6 MESES)
+        function renderProjectionTable() {
+            const tbody = document.getElementById('projection-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            let currentPatrimony = 0;
+            state.accounts.forEach(a => {
+                let bal = Number(a.initialBalance || 0);
+                state.transactions.filter(t => t.status === 'paid').forEach(t => {
+                    if (t.accountId === a.id) {
+                        if (t.type === 'income') bal += t.amount;
+                        else if (t.type === 'expense') bal -= t.amount;
+                        else if (t.type === 'transfer') bal -= t.amount;
+                    }
+                    if (t.type === 'transfer' && t.destAccountId === a.id) bal += t.amount;
+                });
+                currentPatrimony += bal;
+            });
+
+            let runningBalance = currentPatrimony;
+
+            for (let i = 0; i < 6; i++) {
+                const targetDate = new Date();
+                targetDate.setMonth(targetDate.getMonth() + i);
+                const y = targetDate.getFullYear();
+                const m = targetDate.getMonth();
+
+                let fixedExpenseSum = state.recurring.reduce((sum, r) => sum + r.amount, 0);
+
+                let monthTxs = state.transactions.filter(t => {
+                    const eff = getEffectiveDate(t);
+                    return eff.getFullYear() === y && eff.getMonth() === m;
+                });
+
+                let monthInc = monthTxs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+                let monthExp = monthTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+
+                if (monthExp === 0 && fixedExpenseSum > 0) {
+                    monthExp = fixedExpenseSum;
+                }
+
+                runningBalance += (monthInc - monthExp);
+
+                const label = targetDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="text-transform: capitalize; font-weight: bold;">${label}</td>
+                        <td class="val-income">+ R$ ${monthInc.toFixed(2).replace('.', ',')}</td>
+                        <td class="val-expense">- R$ ${monthExp.toFixed(2).replace('.', ',')}</td>
+                        <td style="font-weight: bold; color: ${runningBalance >= 0 ? 'var(--green)' : 'var(--red)'};">R$ ${runningBalance.toFixed(2).replace('.', ',')}</td>
+                    </tr>
+                `;
+            }
         }
 
         function addAccount() {
@@ -1301,6 +1827,7 @@
 
         function renderAccounts() {
             const container = document.getElementById('accounts-container');
+            if(!container) return;
             container.innerHTML = '';
 
             state.accounts.forEach(acc => {
@@ -1316,8 +1843,18 @@
                     }
                 });
 
-                const subtitle = acc.type === 'credit' ? `Cartão (Fechamento: dia ${acc.closingDay})` : 'Conta Corrente';
-                const icon = acc.type === 'credit' ? '💳' : '🏦';
+                let subtitle = 'Conta Corrente';
+                let icon = '🏦';
+                if (acc.type === 'credit') {
+                    subtitle = `Cartão de Crédito (Fechamento: dia ${acc.closingDay})`;
+                    icon = '💳';
+                } else if (acc.type === 'emergency') {
+                    subtitle = 'Reserva de Emergência';
+                    icon = '🛡️';
+                } else if (acc.type === 'investment') {
+                    subtitle = 'Investimento';
+                    icon = '📈';
+                }
 
                 container.innerHTML += `
                     <div class="account-card">
@@ -1346,11 +1883,13 @@
             state.budgets[cat] = limit;
             saveUserData();
             document.getElementById('budget-limit-input').value = '';
+            updateUI();
         }
 
         function renderBudgets(monthTxs) {
             const quickList = document.getElementById('quick-budgets-list');
             const detailList = document.getElementById('budgets-detailed-list');
+            if(!quickList || !detailList) return;
             
             quickList.innerHTML = '';
             detailList.innerHTML = '';
@@ -1391,6 +1930,7 @@
         function generateInsights(income, expense, monthTxs) {
             const banner = document.getElementById('insight-banner');
             const textEl = document.getElementById('insight-text');
+            if(!banner || !textEl) return;
 
             if (monthTxs.length === 0) {
                 banner.style.display = 'none';
@@ -1408,6 +1948,54 @@
             }
         }
 
+        // CALENDÁRIO
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            if(!grid) return;
+            grid.innerHTML = '';
+
+            const year = state.currentDate.getFullYear();
+            const month = state.currentDate.getMonth();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayStr = String(day).padStart(2, '0');
+                const monthStr = String(month + 1).padStart(2, '0');
+                const dateIso = `${year}-${monthStr}-${dayStr}`;
+
+                const txs = state.transactions.filter(t => t.date === dateIso);
+                let hasExp = txs.some(t => t.type === 'expense');
+                let hasInc = txs.some(t => t.type === 'income');
+
+                let bgColor = 'var(--card-bg)';
+                if (hasExp && hasInc) bgColor = 'rgba(59, 130, 246, 0.2)';
+                else if (hasExp) bgColor = 'var(--red-bg)';
+                else if (hasInc) bgColor = 'var(--green-bg)';
+
+                grid.innerHTML += `
+                    <div style="background: ${bgColor}; border: 1px solid var(--border); padding: 10px; border-radius: 8px;">
+                        <div style="font-weight: bold; font-size: 14px;">${day}</div>
+                        <div style="font-size: 10px; margin-top: 4px; color: var(--text-secondary);">${txs.length} item(s)</div>
+                    </div>
+                `;
+            }
+        }
+
+        // SIMULADOR
+        function runSimulation() {
+            const p = parseFloat(document.getElementById('sim-initial').value) || 0;
+            const pm = parseFloat(document.getElementById('sim-monthly').value) || 0;
+            const r = (parseFloat(document.getElementById('sim-rate').value) || 0) / 100 / 12;
+            const n = (parseInt(document.getElementById('sim-years').value) || 0) * 12;
+
+            let total = p;
+            for(let i = 0; i < n; i++) {
+                total = total * (1 + r) + pm;
+            }
+
+            document.getElementById('sim-result').innerText = `Resultado Estimado: R$ ${total.toFixed(2).replace('.', ',')}`;
+        }
+
         // DESENHO DOS GRÁFICOS
         function drawCharts() {
             drawCategoryChart();
@@ -1416,6 +2004,7 @@
 
         function drawCategoryChart() {
             const canvas = document.getElementById('categoryChart');
+            if(!canvas) return;
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -1435,8 +2024,8 @@
             });
 
             if (totalSpent === 0) {
-                ctx.fillStyle = "#94a3b8";
-                ctx.font = "14px sans-serif";
+                ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text-secondary');
+                ctx.font = "14px 'Sora', sans-serif";
                 ctx.textAlign = "center";
                 ctx.fillText("Sem despesas cadastradas no mês", canvas.width / 2, canvas.height / 2);
                 return;
@@ -1447,7 +2036,7 @@
             let i = 0;
 
             const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2 - 20;
+            const centerY = canvas.height / 2;
             const radius = 80;
 
             for (let cat in catTotals) {
@@ -1471,6 +2060,7 @@
 
         function drawHistoryChart() {
             const canvas = document.getElementById('historyChart');
+            if(!canvas) return;
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -1505,7 +2095,7 @@
             const chartHeight = canvas.height - padding * 2;
             const barGroupWidth = chartWidth / months.length;
 
-            ctx.strokeStyle = '#334155';
+            ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--border');
             ctx.beginPath();
             ctx.moveTo(padding, padding);
             ctx.lineTo(padding, canvas.height - padding);
@@ -1524,7 +2114,7 @@
                 ctx.fillRect(x + 16, canvas.height - padding - hExp, 14, hExp);
 
                 ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text-primary');
-                ctx.font = "11px sans-serif";
+                ctx.font = "11px 'Sora', sans-serif";
                 ctx.textAlign = "center";
                 ctx.fillText(m.label, x + 15, canvas.height - padding + 15);
             });
